@@ -1,0 +1,23 @@
+{
+  "version": "1.0.1",
+  "name": "tgen",
+  "cameraZoom": 1.2,
+  "props": [],
+  "characters": {
+    "bf": {
+      "zIndex": 300,
+      "position": [820, 1120],
+      "cameraOffsets": [-5, -40]
+    },
+    "dad": {
+      "zIndex": 200,
+      "position": [520, 960],
+      "cameraOffsets": [80, 15]
+    },
+    "gf": {
+      "zIndex": 100,
+      "position": [600, 350],
+      "cameraOffsets": [680, 770]
+    }
+  }
+}

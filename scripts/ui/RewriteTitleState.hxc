@@ -1,0 +1,482 @@
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxSave;
+import flixel.util.FlxTimer;
+import flixel.util.FlxColor;
+import flixel.util.FlxAxes;
+import funkin.Paths;
+import funkin.PlayerSettings;
+import funkin.graphics.video.FunkinVideoSprite;
+import funkin.ui.MusicBeatState;
+import funkin.ui.ScriptedMusicBeatState;
+import haxe.Exception;
+
+class RewriteTitleState extends MusicBeatState
+{
+    public function new()
+    {
+        super();
+    }
+
+    static inline var PLAY_W:Float = 820.0;
+    static inline var PLAY_H:Float = 720.0;
+
+    var px:Float = -9999.0;
+    var py:Float = -9999.0;
+    var tap:Bool = false;
+    var tapHeld:Bool = false;
+
+    var barLeft:FlxSprite = null;
+    var barRight:FlxSprite = null;
+
+    function makeBars():Void
+    {
+        final barW:Float = (FlxG.width - PLAY_W) / 2;
+        if (barW <= 0) return;
+
+        barLeft = new FlxSprite(0, 0).makeGraphic(Std.int(barW), FlxG.height, FlxColor.BLACK);
+        barRight = new FlxSprite(FlxG.width - barW, 0).makeGraphic(Std.int(barW), FlxG.height, FlxColor.BLACK);
+        add(barLeft);
+        add(barRight);
+    }
+
+    // coordenada X del canvas 820 -> pantalla real
+    function canvasX(x:Float):Float
+    {
+        return (FlxG.width - PLAY_W) / 2 + x;
+    }
+
+    // coordenada Y del canvas 720 -> pantalla real
+    function canvasY(y:Float):Float
+    {
+        return (FlxG.height - PLAY_H) / 2 + y;
+    }
+
+    // X de un sprite que "estaba centrado" dentro del canvas 820
+    function canvasCenteredX(s:FlxSprite):Float
+    {
+        s.updateHitbox();
+        final w:Float = s.frameWidth * Math.abs(s.scale.x);
+        return canvasX((PLAY_W - w) / 2);
+    }
+
+    function ctl():Dynamic
+    {
+        return PlayerSettings.player1.controls;
+    }
+
+    function isMobile():Bool
+    {
+        try
+        {
+            return Reflect.hasField(FlxG, "onMobile") && FlxG.onMobile == true;
+        }
+        catch (e:Exception) {}
+        return false;
+    }
+
+    function readPointer():Void
+    {
+        tap = false;
+        tapHeld = false;
+        px = FlxG.mouse.screenX;
+        py = FlxG.mouse.screenY;
+        tap = FlxG.mouse.justPressed;
+        tapHeld = FlxG.mouse.pressed;
+    }
+
+    function go(name:String):Bool
+    {
+        var s = ScriptedMusicBeatState.init(name);
+        if (s == null)
+        {
+            trace("[RewriteTitle] No se pudo cargar: " + name);
+            return false;
+        }
+        FlxG.switchState(s);
+        return true;
+    }
+
+    function prefsObj():FlxSave
+    {
+        final s = new FlxSave();
+        s.bind("rewrite_mod", "rewrite");
+        return s;
+    }
+
+    function pget(key:String, def:Dynamic):Dynamic
+    {
+        var v = prefsObj().data[key];
+        return v == null ? def : v;
+    }
+
+    function pset(key:String, val:Dynamic):Void
+    {
+        final s = prefsObj();
+        s.data[key] = val;
+        s.flush();
+    }
+
+    var curPhase:Int = 0;
+    var introAnim:FlxSprite = null;
+    var ring:FlxSprite = null;
+    var sonic:FlxSprite = null;
+    var arm:FlxSprite = null;
+    var logo:FlxSprite = null;
+    var sparkles:FlxSprite = null;
+    var pressSpace:FlxSprite = null;
+    var sega:FlxSprite = null;
+
+    var introVideo:FunkinVideoSprite = null;
+    var canSkipVideo:Bool = false;
+    var canEnter:Bool = false;
+    var canSkipSega:Bool = true;
+    var skippedIntro:Bool = false;
+    var skippedVideo:Bool = false;
+    var canSkipIntro:Bool = false;
+    var introSound:Dynamic = null;
+    var inIntro:Bool = false;
+    var leaving:Bool = false;
+
+    override function create():Void
+    {
+        super.create();
+        trace("[RewriteTitle] create");
+        FlxG.mouse.visible = false;
+
+        makeBars(); //blackbars
+
+
+        introAnim = new FlxSprite();
+        introAnim.frames = Paths.getSparrowAtlas("menus/title/intro");
+        introAnim.animation.addByPrefix("intro", "intro", 30, false);
+        introAnim.scale.set(3.5, 3.5);
+        introAnim.y = canvasY(0);
+        add(introAnim);
+
+        ring = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/title/ring"));
+        ring.alpha = 0.001;
+        ring.scale.set(3.5, 3.5);
+        ring.y = canvasY(207.5);
+        add(ring);
+
+        sonic = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/title/sonic"));
+        sonic.alpha = 0.001;
+        sonic.scale.set(3.5, 3.5);
+        sonic.y = canvasY(239.5);
+        add(sonic);
+
+        arm = new FlxSprite();
+        arm.frames = Paths.getSparrowAtlas("menus/title/arm");
+        arm.animation.addByPrefix("arm", "arm", 15, false);
+        arm.scale.set(3.5, 3.5);
+        arm.alpha = 0.001;
+        arm.y = canvasY(0);
+        add(arm);
+
+        logo = new FlxSprite(0, 0).loadGraphic(Paths.image("menus/title/logo"));
+        logo.alpha = 0.001;
+        logo.scale.set(3.5, 3.5);
+        logo.y = canvasY(506.5);
+        add(logo);
+
+        sparkles = new FlxSprite();
+        sparkles.frames = Paths.getSparrowAtlas("menus/title/sparkles");
+        sparkles.animation.addByPrefix("sparkles", "sparkles", 30, true);
+        sparkles.scale.set(1.5, 1.5);
+        sparkles.alpha = 0.001;
+        sparkles.y = canvasY(0) + 230;
+        add(sparkles);
+
+        pressSpace = new FlxSprite().loadGraphic(Paths.image("pressSpace"));
+        pressSpace.scale.set(3.5, 3.5);
+        pressSpace.y = canvasY(0);
+        pressSpace.visible = false;
+        add(pressSpace);
+
+        sega = new FlxSprite();
+        sega.frames = Paths.getSparrowAtlas("menus/title/sega");
+        sega.animation.addByPrefix("sega", "sega", 12, false);
+        sega.animation.addByIndices("loop", "sega", [20, 21, 22, 23, 24], "", 12, true);
+        sega.scale.set(3.5, 3.5);
+        sega.y = canvasY(0);
+        add(sega);
+
+        // ---------- Callbacks ----------
+        introAnim.animation.finishCallback = function(fin:String) {
+            setupSonic();
+        };
+
+        sega.animation.finishCallback = function(fin2:String) {
+            sega.animation.finishCallback = null;
+            sega.animation.play("loop", true);
+        };
+
+        // ---------- Sonido ----------
+        try
+        {
+            introSound = FlxG.sound.play(Paths.sound("title"), 0);
+            if (introSound != null) introSound.pause();
+            else trace("[RewriteTitle] introSound == null");
+        }
+        catch (e:Exception)
+        {
+            trace("[RewriteTitle] Error sonido title: " + e);
+            introSound = null;
+        }
+
+        sega.animation.play("sega");
+
+        new FlxTimer().start(2.25, function(t2:FlxTimer) {
+            if (curPhase == 0)
+            {
+                canSkipSega = false;
+                try { FlxG.sound.play(Paths.sound("segaScream")); } catch (e:Exception) {}
+            }
+        });
+
+        new FlxTimer().start(4.75, function(t3:FlxTimer) {
+            if (sega.alpha < 1) return;
+            FlxTween.tween(sega, {alpha: 0.001}, 0.5);
+            new FlxTimer().start(2, function(t4:FlxTimer) {
+                startVideo();
+            });
+        });
+    }
+
+    function startVideo():Void
+    {
+        curPhase = 1;
+
+        var path:String = null;
+        try { path = Paths.videos("intro"); } catch (e:Exception) { trace("[RewriteTitle] Paths.videos falló: " + e); }
+        trace("[RewriteTitle] Ruta del video: " + path);
+
+        try
+        {
+            introVideo = new FunkinVideoSprite(0, 0);
+
+            introVideo.bitmap.onFormatSetup.add(function() {
+                introVideo.setGraphicSize(FlxG.width * 1.02, FlxG.height);
+                introVideo.updateHitbox();
+            });
+
+            introVideo.bitmap.onEndReached.add(function() {
+                if (skippedVideo) return;
+                trace("[RewriteTitle] Video terminó");
+                FlxTween.tween(introVideo, { alpha: 0.001 }, 0.3);
+                new FlxTimer().start(0.8, function(t6:FlxTimer) {
+                    startIntro();
+                });
+            }, true);
+
+            introVideo.alpha = 0.001;
+            add(introVideo);
+
+            if (path != null && introVideo.load(path))
+            {
+                trace("[RewriteTitle] Video cargado, reproduciendo");
+                FlxTween.tween(introVideo, { alpha: 1 }, 0.3);
+                introVideo.play();
+                canSkipVideo = true;
+            }
+            else
+            {
+                trace("[RewriteTitle] No se pudo cargar el video, saltando");
+                introVideo = null;
+                startIntro();
+            }
+        }
+        catch (e:Exception)
+        {
+            trace("[RewriteTitle] ERROR con video: " + e);
+            introVideo = null;
+            startIntro();
+        }
+    }
+
+    function setupSonic():Void
+    {
+        trace("[RewriteTitle] setupSonic");
+        introAnim.animation.finishCallback = null;
+        introAnim.alpha = 0.001;
+        for (i in [ring, sonic, arm, logo]) if (i != null) i.alpha = 1;
+
+        new FlxTimer().start(2, function(t7:FlxTimer) {
+            if (arm != null) arm.animation.play("arm", true);
+        }, 0);
+
+        new FlxTimer().start(0.35, function(t8:FlxTimer) {
+            if (pressSpace != null) pressSpace.visible = !pressSpace.visible;
+        }, 0);
+    }
+
+    function startIntro():Void
+    {
+        if (skippedIntro) return;
+        trace("[RewriteTitle] startIntro");
+        inIntro = true;
+
+        new FlxTimer().start(0.001, function(t9:FlxTimer) {
+            curPhase = 2;
+            canSkipIntro = true;
+        });
+
+        if (introSound != null)
+        {
+            try
+            {
+                introSound.play(true);
+                introSound.volume = 1;
+            }
+            catch (e:Exception) {}
+        }
+
+        new FlxTimer().start(1.05, function(t10:FlxTimer) {
+            if (introAnim != null) introAnim.animation.play("intro");
+        });
+
+        new FlxTimer().start(5, function(t11:FlxTimer) {
+            if (skippedIntro) return;
+            FlxG.camera.fade(0xFFFFFFFF, 0.3, false);
+        });
+
+        new FlxTimer().start(6.5, function(t12:FlxTimer) {
+            if (skippedIntro) return;
+            canSkipIntro = false;
+            canEnter = true;
+            FlxG.camera.fade(0xFFFFFFFF, 0.3, true);
+            if (sparkles != null)
+            {
+                sparkles.alpha = 1;
+                sparkles.animation.play("sparkles");
+            }
+        });
+
+        new FlxTimer().start(8.5, function(t13:FlxTimer) {
+            if (skippedIntro) return;
+            if (sparkles != null) sparkles.alpha = 0.001;
+        });
+    }
+
+    override function update(elapsed:Float):Void
+    {
+        super.update(elapsed);
+        readPointer();
+        FlxG.mouse.visible = false;
+
+        final acc:Bool = ctl().ACCEPT || tap;
+
+        if (inIntro && introSound != null) introSound.volume = 1;
+
+        if (canSkipSega && acc && curPhase == 0)
+        {
+            canSkipSega = false;
+            if (sega != null) FlxTween.tween(sega, {alpha: 0.001}, 0.3);
+            new FlxTimer().start(0.5, function(t14:FlxTimer) {
+                startVideo();
+            });
+        }
+
+        if (canSkipVideo && acc && curPhase == 1 && introVideo != null)
+        {
+            canSkipVideo = false;
+            try { introVideo.pause(); } catch (e:Exception) {}
+            FlxTween.tween(introVideo, {alpha: 0.001}, 0.3);
+            new FlxTimer().start(0.3, function(t15:FlxTimer) {
+                skippedVideo = true;
+                startIntro();
+            });
+        }
+
+        if (!skippedIntro && acc && curPhase == 2 && canSkipIntro)
+        {
+            skippedIntro = true;
+            canSkipIntro = false;
+            if (introAnim != null) introAnim.animation.finishCallback = null;
+
+            if (introSound != null)
+            {
+                try
+                {
+                    introSound.play(true, 6280);
+                    introSound.volume = 1;
+                }
+                catch (e:Exception) {}
+            }
+
+            new FlxTimer().start(0.001, function(t16:FlxTimer) {
+                canEnter = true;
+            });
+
+            setupSonic();
+            FlxG.camera.fade(0xFFFFFFFF, 0.3, true);
+
+            if (sparkles != null)
+            {
+                sparkles.alpha = 1;
+                sparkles.animation.play("sparkles");
+            }
+
+            new FlxTimer().start(2, function(t17:FlxTimer) {
+                if (sparkles != null) sparkles.alpha = 0.001;
+            });
+        }
+
+        if (canEnter && acc && !leaving)
+        {
+            canEnter = false;
+            leaving = true;
+
+            try { FlxG.sound.play(Paths.sound("confirmMenu")); } catch (e:Exception) {}
+
+            new FlxTimer().start(0.25, function(t18:FlxTimer) {
+                for (i in [ring, sonic, arm, logo, sparkles, pressSpace])
+                    if (i != null && i.alpha == 1) FlxTween.tween(i, { color: 0xFF0000FF }, 0.3);
+
+                FlxG.camera.fade(0xFF000000, 0.5);
+
+                new FlxTimer().start(0.55, function(t19:FlxTimer) {
+                    go("RewriteMainMenuState");
+                });
+            });
+        }
+
+        // ============================================================
+        //  LAYOUT EN X
+        //  - Posiciones del canvas 820: ring, sonic, logo, arm,
+        //    sparkles, pressSpace
+        //  - Centrados en pantalla: introAnim, video, sega
+        //  Y queda fija del create.
+        // ============================================================
+
+        // Posiciones exactas del canvas 820 original
+        if (ring != null) ring.x = canvasX(250);
+        if (sonic != null) sonic.x = canvasX(387);
+        if (logo != null) logo.x = canvasX(382);
+        if (arm != null) arm.x = canvasCenteredX(arm);
+        if (sparkles != null) sparkles.x = canvasCenteredX(sparkles);
+        if (pressSpace != null) pressSpace.x = canvasCenteredX(pressSpace);
+
+        // Centrados en pantalla
+        if (introAnim != null) { introAnim.updateHitbox(); introAnim.screenCenter(FlxAxes.X); }
+        if (sega != null) { sega.updateHitbox(); sega.screenCenter(FlxAxes.X); }
+        if (introVideo != null) { introVideo.updateHitbox(); introVideo.x = (FlxG.width - introVideo.width) / 2; }
+    }
+
+    override function onDestroy():Void
+    {
+        if (introVideo != null)
+        {
+            try
+            {
+                introVideo.stop();
+                introVideo.destroy();
+            }
+            catch (e:Exception) {}
+            introVideo = null;
+        }
+        super.onDestroy();
+    }
+}

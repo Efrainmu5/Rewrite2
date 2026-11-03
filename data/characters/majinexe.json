@@ -1,0 +1,46 @@
+{
+  "version": "1.0.0",
+  "name": "Majinexe",
+  "renderType": "sparrow",
+  "assetPath": "characters/fusionLegacy",
+  "singTime": 6.1,
+  "scale": 4.0,
+  "flipX": false,
+  "healthIcon": {
+    "id": "majinexe",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [0, 0],
+      "frameRate": 30,
+      "looped": true
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "left",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "down",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singUP",
+      "prefix": "up",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "right",
+      "offsets": [0, 0],
+      "frameRate": 30
+    }
+  ]
+}

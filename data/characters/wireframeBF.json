@@ -1,0 +1,136 @@
+{
+	"version": "1.0.0",
+	"renderType": "sparrow",
+	"danceEvery": 1,
+	"scale": 1.4,
+	"name": "wireframeBF",
+	"singTime": 3.0,
+	"startingAnimation": "idle",
+	"isPixel": false,
+	"healthIcon": {
+		"id": "bf-model"
+	},
+	"assetPath": "characters/wireframeBF",
+	"animations": [
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "idle",
+			"flipX": false,
+			"looped": false,
+			"name": "idle"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "singLEFT",
+			"flipX": false,
+			"looped": false,
+			"name": "singLEFT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "singDOWN",
+			"flipX": false,
+			"looped": false,
+			"name": "singDOWN"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "singUP",
+			"flipX": false,
+			"looped": false,
+			"name": "singUP"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "singRIGHT",
+			"flipX": false,
+			"looped": false,
+			"name": "singRIGHT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "miss",
+			"flipX": false,
+			"looped": false,
+			"name": "singDOWNmiss"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "miss",
+			"flipX": false,
+			"looped": false,
+			"name": "singLEFTmiss"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "miss",
+			"flipX": false,
+			"looped": false,
+			"name": "singRIGHTmiss"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "miss",
+			"flipX": false,
+			"looped": false,
+			"name": "singUPmiss"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-70,
+				-70
+			],
+			"frameRate": 30,
+			"prefix": "yeah",
+			"flipX": false,
+			"looped": false,
+			"name": "yeah"
+		}
+	]
+}

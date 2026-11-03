@@ -1,0 +1,89 @@
+{
+  "version": "1.0.0",
+  "name": "BfTGE",
+  "renderType": "sparrow",
+  "assetPath": "characters/boyfriendTGE",
+  "singTime": 3.0,
+  "scale": 3.0,
+  "flipX": true,
+  "healthIcon": {
+    "id": "bf-model",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "left0",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "down0",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "right0",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singLEFTmiss",
+      "prefix": "leftmiss",
+      "offsets": [0, 0],
+      "frameRate": 15
+    },
+    {
+      "name": "singUPmiss",
+      "prefix": "upmiss",
+      "offsets": [0, 0],
+      "frameRate": 15
+    },
+    {
+      "name": "singUP",
+      "prefix": "up0",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWNmiss",
+      "prefix": "downmiss",
+      "offsets": [0, 0],
+      "frameRate": 15
+    },
+    {
+      "name": "singRIGHTmiss",
+      "prefix": "rightmiss",
+      "offsets": [0, 0],
+      "frameRate": 15
+    },
+    {
+      "name": "blink",
+      "prefix": "blink",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "introAnim",
+      "prefix": "move",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "stare",
+      "prefix": "blink",
+      "offsets": [0, 0],
+      "frameRate": 30,
+      "looped": true,
+      "indices": [77, 77]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "name": "sonicFirstPerson",
+  "renderType": "sparrow",
+  "assetPath": "characters/sonicFirstPerson",
+  "singTime": 1.9,
+  "scale": 2,
+  "flipX": false,
+  "healthIcon": {
+    "id": "sonic-icon",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "singDOWN",
+      "prefix": "down",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "left",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "right",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "singUP",
+      "prefix": "up",
+      "offsets": [0, 0],
+      "frameRate": 30
+    },
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [0, 0],
+      "frameRate": 30,
+      "looped": true
+    },
+    {
+      "name": "twitterStinksImLeaving",
+      "prefix": "alway",
+      "offsets": [0, 0],
+      "frameRate": 30
+    }
+  ]
+}

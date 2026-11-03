@@ -1,0 +1,156 @@
+import flixel.FlxG;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import flixel.tweens.FlxTween;
+import funkin.Paths;
+import funkin.modding.module.Module;
+import funkin.modding.events.ScriptEvent;
+import funkin.play.PlayState;
+import haxe.Exception;
+
+class RewriteHealthModule extends Module
+{
+    public static var instance:RewriteHealthModule;
+
+    public function new()
+    {
+        super('RewriteHealthModule');
+        instance = this;
+    }
+
+    var ps:PlayState = null;
+    var label:FlxText = null;
+    var labelS:FlxText = null;
+    var value:FlxText = null;
+    var valueS:FlxText = null;
+
+    var autoLayout:Bool = true;
+    var flickerT:Float = 0.0;
+    var flickerRed:Bool = false;
+    var lastShown:Int = -999;
+    var ready:Bool = false;
+
+    function mkText(str:String, size:Int, color:Int):FlxText
+    {
+        final t:FlxText = new FlxText(0, 0, 0, str);
+        t.setFormat(Paths.font("sonic-1-hud-font.ttf"), size, color, "left");
+        t.scrollFactor.set(0, 0);
+        t.zIndex = 3100;
+        return t;
+    }
+
+    function build():Void
+    {
+        if (ps == null) return;
+
+        labelS = mkText("HEALTH", 40, 0xFF000000);
+        label = mkText("HEALTH", 40, 0xFFE7E700);
+        valueS = mkText("", 40, 0xFF000000);
+        value = mkText("", 40, 0xFFFFFFFF);
+
+        for (t in [labelS, label, valueS, value])
+        {
+            ps.add(t);
+            try { t.cameras = [ps.camHUD]; } catch (e:Exception) {}
+        }
+
+        layout();
+        ready = true;
+    }
+
+    function layout():Void
+    {
+        if (!autoLayout || label == null) return;
+        final total:Float = label.width + value.width;
+        final x:Float = (FlxG.width - total) / 2;
+        final y:Float = (FlxG.height - label.height) / 2;
+        labelS.setPosition(x + 2, y + 2);
+        label.setPosition(x, y);
+        valueS.setPosition(x + label.width + 2, y + 2);
+        value.setPosition(x + label.width, y);
+    }
+
+    public function setAutoLayout(v:Bool):Void
+    {
+        autoLayout = v;
+        if (v) layout();
+    }
+
+    public function setPosition(dx:Float, dy:Float):Void
+    {
+        if (label == null) return;
+        labelS.setPosition(dx + 2, dy + 2);
+        label.setPosition(dx, dy);
+        valueS.setPosition(dx + label.width + 2, dy + 2);
+        value.setPosition(dx + label.width, dy);
+    }
+
+    public function setAlpha(a:Float):Void
+    {
+        for (t in [labelS, label, valueS, value]) if (t != null) t.alpha = a;
+    }
+
+    public function fadeTo(a:Float, dur:Float):Void
+    {
+        for (t in [labelS, label, valueS, value])
+        {
+            if (t == null) continue;
+            FlxTween.cancelTweensOf(t);
+            if (dur <= 0.01) t.alpha = a;
+            else FlxTween.tween(t, {alpha: a}, dur);
+        }
+    }
+
+    override function onCreate(event:ScriptEvent):Void
+    {
+        super.onCreate(event);
+        ps = PlayState.instance;
+        ready = false;
+        if (ps == null) return;
+
+        lastShown = -999;
+        flickerT = 0.0;
+        flickerRed = false;
+        autoLayout = true;
+
+        build();
+    }
+
+    override function onUpdate(event:UpdateScriptEvent):Void
+    {
+        super.onUpdate(event);
+        if (!ready || ps == null || label == null) return;
+
+        final h:Float = ps.health;
+        var m:Int = Std.int(Math.floor(h * 50));
+        if (m > 100) m = 100;
+        if (m <= 1 && m > 0) m = 1;
+
+        if (m != lastShown)
+        {
+            lastShown = m;
+            value.text = "" + m;
+            valueS.text = "" + m;
+            layout();
+        }
+
+        flickerT += event.elapsed;
+        if (flickerT >= 0.2)
+        {
+            flickerT = 0.0;
+            flickerRed = m < 30 ? !flickerRed : false;
+            label.color = flickerRed ? 0xFFE80000 : 0xFFE7E700;
+        }
+    }
+
+    override function onDestroy(event:ScriptEvent):Void
+    {
+        super.onDestroy(event);
+        ready = false;
+        ps = null;
+        label = null;
+        labelS = null;
+        value = null;
+        valueS = null;
+    }
+}

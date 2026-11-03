@@ -1,0 +1,705 @@
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+import flixel.util.FlxSave;
+import flixel.util.FlxTimer;
+import funkin.Paths;
+import funkin.PlayerSettings;
+import funkin.audio.FunkinSound;
+import funkin.ui.MusicBeatState;
+import funkin.ui.ScriptedMusicBeatState;
+import haxe.Exception;
+import openfl.display.BlendMode;
+import flixel.addons.display.FlxBackdrop;
+import flixel.tweens.FlxEase;
+import openfl.utils.Assets;
+
+class RewriteCreditsState extends MusicBeatState
+{
+    public function new()
+    {
+        super();
+    }
+
+    // ======================================================================
+    //  BLOQUE COMUN (mismo estilo que RewriteMainMenuState)
+    // ======================================================================
+    var DW:Float = 820.0;
+    var DH:Float = 720.0;
+    var offsetX:Float = 0.0;
+    var offsetY:Float = 0.0;
+
+    var px:Float = -9999.0;
+    var py:Float = -9999.0;
+    var tap:Bool = false;
+    var tapHeld:Bool = false;
+
+    function initLayout():Void
+    {
+        offsetX = (FlxG.width - DW) / 2;
+        offsetY = (FlxG.height - DH) / 2;
+        FlxG.camera.bgColor = 0xFF000000;
+    }
+
+    function put(o:Dynamic):Dynamic
+    {
+        add(o);
+        return o;
+    }
+
+    // equivalente a screenCenter() dentro del canvas de 820x720
+    function ctr(s:FlxSprite, axis:Int):Void
+    {
+        if (axis != 0x10) s.x = offsetX + (DW - s.width) / 2;
+        if (axis != 0x01) s.y = offsetY + (DH - s.height) / 2;
+    }
+
+    function mkText(x:Float, y:Float, w:Float, str:String, size:Int, color:Int, align:String, font:String):FlxText
+    {
+        final t:FlxText = new FlxText(offsetX + x, offsetY + y, w, str);
+        t.setFormat(Paths.font(font), size, color, align, FlxTextBorderStyle.SHADOW, 0xFF000000);
+        t.shadowOffset.x += 1;
+        t.shadowOffset.y += 3;
+        return t;
+    }
+
+    function mkBlueFade():FlxSprite
+    {
+        final f:FlxSprite = new FlxSprite(offsetX, offsetY).makeGraphic(Std.int(DW), Std.int(DH), 0xFF0000FF);
+        f.blend = BlendMode.MULTIPLY;
+        f.alpha = 0.001;
+        put(f);
+        return f;
+    }
+
+    function ctl():Dynamic
+    {
+        return PlayerSettings.player1.controls;
+    }
+
+    function isMobile():Bool
+    {
+        try
+        {
+            return FlxG.onMobile == true;
+        }
+        catch (e:Exception) {}
+        return false;
+    }
+
+    // raton (PC) + pantalla tactil (movil) en un solo puntero.
+    // Las coordenadas son del mundo de la camara, asi que cuadran con x/y de los sprites.
+    function readPointer():Void
+    {
+        tap = false;
+        tapHeld = false;
+
+        try
+        {
+            final p = FlxG.mouse.getWorldPosition(FlxG.camera);
+            px = p.x;
+            py = p.y;
+            p.put();
+        }
+        catch (e:Exception)
+        {
+            px = FlxG.mouse.screenX;
+            py = FlxG.mouse.screenY;
+        }
+        tap = FlxG.mouse.justPressed;
+        tapHeld = FlxG.mouse.pressed;
+
+        try
+        {
+            for (t in FlxG.touches.list)
+            {
+                final tp = t.getWorldPosition(FlxG.camera);
+                if (t.justPressed)
+                {
+                    px = tp.x;
+                    py = tp.y;
+                    tap = true;
+                }
+                if (t.pressed) tapHeld = true;
+                tp.put();
+            }
+        }
+        catch (e2:Exception) {}
+    }
+
+    // trim propio (StringTools no esta disponible dentro de los scripts)
+    function trimStr(s:String):String
+    {
+        var a:Int = 0;
+        var b:Int = s.length;
+        while (a < b && (s.charAt(a) == " " || s.charAt(a) == "\r" || s.charAt(a) == "\n" || s.charAt(a) == "\t")) a++;
+        while (b > a && (s.charAt(b - 1) == " " || s.charAt(b - 1) == "\r" || s.charAt(b - 1) == "\n" || s.charAt(b - 1) == "\t")) b--;
+        return s.substr(a, b - a);
+    }
+
+    function over(s:FlxSprite):Bool
+    {
+        return s != null && px >= s.x && px <= s.x + s.width && py >= s.y && py <= s.y + s.height;
+    }
+
+    function go(name:String):Bool
+    {
+        final s = ScriptedMusicBeatState.init(name);
+        if (s == null)
+        {
+            trace("[Rewrite] No se pudo cargar: " + name);
+            return false;
+        }
+        FlxG.switchState(s);
+        return true;
+    }
+
+    // ---- guardados ----
+    function prefsObj():FlxSave
+    {
+        final s:FlxSave = new FlxSave();
+        s.bind("rewrite_mod", "rewrite");
+        return s;
+    }
+
+    function pget(key:String, def:Dynamic):Dynamic
+    {
+        var v:Dynamic = prefsObj().data[key];
+        return v == null ? def : v;
+    }
+
+    function pset(key:String, val:Dynamic):Void
+    {
+        final s = prefsObj();
+        s.data[key] = val;
+        s.flush();
+    }
+
+    function sget(key:String, def:Dynamic):Dynamic
+    {
+        final s = new FlxSave();
+        s.bind("rewrite_session", "rewrite");
+        var v:Dynamic = s.data[key];
+        return v == null ? def : v;
+    }
+
+    function sset(key:String, val:Dynamic):Void
+    {
+        final s = new FlxSave();
+        s.bind("rewrite_session", "rewrite");
+        s.data[key] = val;
+    }
+
+    function flashingOn():Bool
+    {
+        final v:Dynamic = pget("flashing", null);
+        if (v != null) return v == true;
+        try
+        {
+            final cls = Type.resolveClass("funkin.Preferences");
+            if (cls != null)
+            {
+                final n:Dynamic = Reflect.getProperty(cls, "flashingLights");
+                if (n != null) return n == true;
+            }
+        }
+        catch (e:Exception) {}
+        return true;
+    }
+
+    // reproduce una musica (nombre de V-Slice) y si no suena, prueba la ruta plana
+    function playMenuMusic(name:String, vol:Float, loop:Bool):Void
+    {
+        try
+        {
+            FunkinSound.playMusic(name, {
+                startingVolume: vol,
+                overrideExisting: true,
+                restartTrack: true,
+                loop: loop,
+                volume: vol,
+                persist: true,
+                restart: true
+            });
+        }
+        catch (e:Exception) {}
+
+        if (FlxG.sound.music == null || !FlxG.sound.music.playing)
+        {
+            try { FlxG.sound.playMusic(Paths.music(name), vol, loop); }
+            catch (e2:Exception) {}
+        }
+    }
+
+    function stopMusic():Void
+    {
+        if (FlxG.sound.music != null) FlxG.sound.music.stop();
+    }
+
+    function fadeMusicTo(vol:Float, time:Float):Void
+    {
+        if (FlxG.sound.music != null) FlxTween.tween(FlxG.sound.music, {volume: vol}, time);
+    }
+
+    function overS(s:FlxSprite):Bool
+    {
+        if (s == null) return false;
+        final w:Float = s.frameWidth * Math.abs(s.scale.x);
+        final h:Float = s.frameHeight * Math.abs(s.scale.y);
+        final cx:Float = s.x + s.width / 2;
+        final cy:Float = s.y + s.height / 2;
+        return px >= cx - w / 2 && px <= cx + w / 2 && py >= cy - h / 2 && py <= cy + h / 2;
+    }
+
+    // barras negras para tapar lo que sobresale del canvas 820x720 (se llama al final)
+    function addBars():Void
+    {
+        if (offsetX > 0)
+        {
+            put(new FlxSprite(0, 0).makeGraphic(Std.int(offsetX), Std.int(FlxG.height), 0xFF000000));
+            put(new FlxSprite(FlxG.width - offsetX, 0).makeGraphic(Std.int(offsetX) + 1, Std.int(FlxG.height), 0xFF000000));
+        }
+        if (offsetY > 0)
+        {
+            put(new FlxSprite(0, 0).makeGraphic(Std.int(FlxG.width), Std.int(offsetY), 0xFF000000));
+            put(new FlxSprite(0, FlxG.height - offsetY).makeGraphic(Std.int(FlxG.width), Std.int(offsetY) + 1, 0xFF000000));
+        }
+    }
+
+    // cursor propio del mod (solo en PC)
+    var customCursor:FlxSprite = null;
+
+    function makeCursor():Void
+    {
+        try
+        {
+            customCursor = new FlxSprite(-100, -100);
+            customCursor.frames = Paths.getSparrowAtlas("cursor");
+            customCursor.animation.addByPrefix("default", "default", 24, false);
+            customCursor.animation.addByPrefix("wait", "wait", 24, false);
+            customCursor.animation.addByPrefix("hover", "hover", 24, false);
+            customCursor.animation.play("default");
+            customCursor.scale.set(1.5, 1.5);
+            customCursor.visible = !isMobile();
+            put(customCursor);
+        }
+        catch (e:Exception)
+        {
+            // sin cursor propio: se usa el del sistema
+            trace("[Rewrite] No se pudo crear el cursor: " + e);
+            customCursor = null;
+            FlxG.mouse.visible = true;
+        }
+    }
+
+    var cursorForceX:Float = -1.0;
+    var cursorForceY:Float = -1.0;
+
+    function cursorAnim(name:String):Void
+    {
+        if (customCursor == null) return;
+        if (cursorForceX >= 0)
+        {
+            customCursor.x = cursorForceX;
+            customCursor.y = cursorForceY;
+        }
+        else
+        {
+            customCursor.x = FlxG.mouse.x;
+            customCursor.y = FlxG.mouse.y;
+        }
+        try
+        {
+            if (customCursor.animation.curAnim == null || customCursor.animation.curAnim.name != name) customCursor.animation.play(name, true);
+        }
+        catch (e:Exception) {}
+    }
+
+    // ---- depuracion: F9 muestra la posicion del puntero y las zonas clickeables ----
+    var dbgOn:Bool = false;
+    var dbgText:FlxText = null;
+    var dbgTargets:Array<FlxSprite> = [];
+    var dbgBoxes:Array<FlxSprite> = [];
+
+    function dbgSet(list:Array<FlxSprite>):Void
+    {
+        dbgTargets = list;
+    }
+
+    function dbgUpdate():Void
+    {
+        if (FlxG.keys.justPressed.F9)
+        {
+            dbgOn = !dbgOn;
+            if (dbgText == null)
+            {
+                dbgText = new FlxText(offsetX + 5, offsetY + 5, 500, "");
+                dbgText.setFormat(null, 16, 0xFFFFFF00, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+                put(dbgText);
+            }
+            dbgText.visible = dbgOn;
+            for (bx in dbgBoxes) bx.visible = dbgOn;
+        }
+        if (!dbgOn) return;
+
+        dbgText.text = "x=" + Std.int(px) + "  y=" + Std.int(py) + "  tap=" + tap + "  held=" + tapHeld;
+
+        while (dbgBoxes.length < dbgTargets.length)
+        {
+            final nb:FlxSprite = new FlxSprite(0, 0).makeGraphic(1, 1, 0x66FF0000);
+            put(nb);
+            dbgBoxes.push(nb);
+        }
+
+        for (i in 0...dbgTargets.length)
+        {
+            final s:FlxSprite = dbgTargets[i];
+            final bx:FlxSprite = dbgBoxes[i];
+            if (s == null)
+            {
+                bx.visible = false;
+                continue;
+            }
+            bx.visible = true;
+            bx.setGraphicSize(Std.int(Math.max(1, s.width)), Std.int(Math.max(1, s.height)));
+            bx.updateHitbox();
+            bx.setPosition(s.x, s.y);
+        }
+    }
+    var bg:FlxBackdrop = null;
+    var menuTitle:FlxSprite = null;
+    var back:FlxSprite = null;
+    var up:FlxSprite = null;
+    var down:FlxSprite = null;
+    var endCredits:FlxSprite = null;
+    var blueFade:FlxSprite = null;
+
+    var bsky:FlxSprite = null;
+    var youtube:FlxSprite = null;
+    var twitter:FlxSprite = null;
+
+    var border:FlxSprite = null;
+    var nameText:FlxText = null;
+    var seperator:FlxSprite = null;
+    var desc:FlxText = null;
+
+    var entries:Array<Dynamic> = [];
+    var icons:Array<FlxSprite> = [];
+    var allowInput:Bool = true;
+    var canChange:Bool = true;
+    var curSelected:Int = 0;
+    var kbIdx:Int = -1; // seleccion con teclado/control: 0 bsky, 1 youtube, 2 twitter, 3 replay
+
+    // formato de cada linea de data/credits.txt:
+    // nombre::que hizo::link bluesky::link youtube::link twitter
+    function loadEntries():Void
+    {
+        var raw:String = null;
+        try
+        {
+            final path:String = Paths.file("data/credits.txt");
+            if (Assets.exists(path)) raw = Assets.getText(path);
+        }
+        catch (e:Exception) {}
+
+        if (raw == null)
+        {
+            try
+            {
+                final path2:String = Paths.txt("credits");
+                if (Assets.exists(path2)) raw = Assets.getText(path2);
+            }
+            catch (e2:Exception) {}
+        }
+
+        if (raw == null)
+        {
+            trace("[RewriteCredits] No se encontro data/credits.txt");
+            entries.push(["Credits", "data/credits.txt not found", "null", "null", "null"]);
+            return;
+        }
+
+        for (line in raw.split("\n"))
+        {
+            final clean:String = trimStr(line.split("\\n").join("\n"));
+            if (clean.length < 3) continue;
+
+            final arr:Array<String> = clean.split("::");
+            while (arr.length < 5) arr.push("null");
+            for (k in 0...arr.length) arr[k] = trimStr(arr[k]);
+            entries.push(arr);
+        }
+    }
+
+    function mkSocial(x:Float, y:Float, anim:String, sx:Float):FlxSprite
+    {
+        final s:FlxSprite = new FlxSprite(offsetX + x, offsetY + y);
+        s.frames = Paths.getSparrowAtlas("menus/credits/socials");
+        s.animation.addByPrefix("enabled", anim + "0", 24, true);
+        s.animation.addByPrefix("disabled", anim + "Disabled", 24, true);
+        s.animation.play("enabled");
+        s.scale.set(sx, 5);
+        s.updateHitbox();
+        put(s);
+        return s;
+    }
+
+    override function create():Void
+    {
+        super.create();
+        initLayout();
+        FlxG.mouse.visible = false;
+
+        FlxG.camera.alpha = 0;
+        new FlxTimer().start(0.001, function(t0:FlxTimer) {
+            FlxG.camera.alpha = 1;
+            FlxG.camera.flash(0xFF000000, 0.6);
+        });
+
+        loadEntries();
+
+        bg = new FlxBackdrop(Paths.image("menus/credits/bg"));
+        bg.setGraphicSize(Std.int(DW * 2), Std.int(DH * 2));
+        ctr(bg, 0x11);
+        bg.velocity.set(10, 10);
+        put(bg);
+
+        back = new FlxSprite(offsetX + 10, offsetY + 635).loadGraphic(Paths.image("menus/options/back"));
+        back.scale.set(3, 3);
+        back.updateHitbox();
+        put(back);
+
+        menuTitle = new FlxSprite(offsetX + 140, offsetY + 50).loadGraphic(Paths.image("menus/credits/credits"));
+        menuTitle.scale.set(3, 3);
+
+        bsky = mkSocial(102, 236, "bsky", 5);
+        youtube = mkSocial(103, 366, "youtube", 5.2);
+        twitter = mkSocial(107, 445, "twitter", 5);
+
+        border = new FlxSprite().loadGraphic(Paths.image("menus/credits/select"));
+        border.scale.set(5, 5);
+        ctr(border, 0x11);
+        border.x -= 50;
+        put(border);
+
+        nameText = new FlxText(border.x + 146, border.y - 40, DW, "HUGGY WUGGY");
+        nameText.font = Paths.font("3dBlast.ttf");
+        nameText.alignment = "left";
+        nameText.size = 28;
+        put(nameText);
+
+        seperator = new FlxSprite(border.x + 148, border.y).makeGraphic(371, 6, 0xFFFFFFFF);
+        put(seperator);
+
+        desc = new FlxText(border.x + 146, border.y + 10, DW, "- what one you favorite");
+        desc.font = Paths.font("sonic2HUD.ttf");
+        desc.alignment = "left";
+        desc.size = 26;
+        put(desc);
+
+        for (i in [bsky, youtube, twitter, border, nameText, desc, seperator]) i.x -= 70;
+
+        for (i in 0...entries.length)
+        {
+            final icon:FlxSprite = new FlxSprite(border.x, border.y + i * 200);
+            try { icon.loadGraphic(Paths.image("credits/" + entries[i][0])); }
+            catch (e:Exception) { icon.makeGraphic(16, 16, 0xFF808080); }
+            icon.scale.set(5, 5);
+            icons.push(icon);
+            put(icon);
+        }
+
+        up = new FlxSprite(offsetX + 550, offsetY + 80).loadGraphic(Paths.image("menus/credits/arrow"));
+
+        down = new FlxSprite(offsetX + 550, offsetY + 580).loadGraphic(Paths.image("menus/credits/arrow"));
+        down.flipY = true;
+
+        for (i in [up, down])
+        {
+            i.scale.set(5, 5);
+            i.updateHitbox();
+            put(i);
+        }
+
+        endCredits = new FlxSprite(offsetX + 20, offsetY + 150).loadGraphic(Paths.image("menus/credits/replayCreditsRoll"));
+        endCredits.scale.set(2.6, 2.6);
+        endCredits.updateHitbox();
+        put(endCredits);
+
+        put(menuTitle);
+
+        blueFade = mkBlueFade();
+
+        addBars();
+        makeCursor();
+
+        changeSelection(0);
+    }
+
+    function changeSelection(change:Int):Void
+    {
+        if (!canChange) return;
+        if (entries.length == 0) return;
+
+        if (change != 0) FlxG.sound.play(Paths.sound("scrollMenu"), 0.8);
+
+        var wrapped:Bool = false;
+        curSelected += change;
+
+        if (curSelected > entries.length - 1)
+        {
+            curSelected = 0;
+            for (i in 0...icons.length)
+            {
+                final tweenNum:Float = border.y + i * 200;
+                canChange = false;
+                FlxTween.cancelTweensOf(icons[i]);
+                FlxTween.tween(icons[i], {y: tweenNum, alpha: i == curSelected ? 1 : 0.5}, 0.15, {ease: FlxEase.cubeOut, onComplete: function(twn:FlxTween) {
+                    canChange = true;
+                }});
+                FlxTween.tween(icons[i].scale, {x: i == curSelected ? 5 : 4, y: i == curSelected ? 5 : 4}, 0.15, {ease: FlxEase.cubeOut});
+            }
+            wrapped = true;
+        }
+
+        if (curSelected < 0)
+        {
+            curSelected = entries.length - 1;
+            for (i in 0...icons.length)
+            {
+                final tweenNum2:Float = border.y + i * 200 - 200 * entries.length + 200;
+                canChange = false;
+                FlxTween.tween(icons[i], {y: tweenNum2, alpha: i == curSelected ? 1 : 0.5}, 0.15, {ease: FlxEase.cubeOut, onComplete: function(twn2:FlxTween) {
+                    canChange = true;
+                }});
+                FlxTween.tween(icons[i].scale, {x: i == curSelected ? 5 : 4, y: i == curSelected ? 5 : 4}, 0.15, {ease: FlxEase.cubeOut});
+            }
+            wrapped = true;
+        }
+
+        nameText.text = entries[curSelected][0].toUpperCase();
+        desc.text = entries[curSelected][1];
+        bsky.animation.play(entries[curSelected][2] == "null" ? "disabled" : "enabled");
+        youtube.animation.play(entries[curSelected][3] == "null" ? "disabled" : "enabled");
+        twitter.animation.play(entries[curSelected][4] == "null" ? "disabled" : "enabled");
+
+        if (kbIdx >= 0 && kbIdx < 3 && !socialOn([bsky, youtube, twitter][kbIdx]))
+        {
+            kbIdx = -1;
+            kbPaint();
+        }
+
+        if (wrapped) return;
+
+        for (i in 0...icons.length)
+        {
+            final tweenNum3:Float = icons[i].y - 200 * change;
+            canChange = false;
+            FlxTween.cancelTweensOf(icons[i]);
+            FlxTween.tween(icons[i], {y: tweenNum3, alpha: i == curSelected ? 1 : 0.5}, 0.15, {ease: FlxEase.cubeOut, onComplete: function(twn3:FlxTween) {
+                canChange = true;
+            }});
+            FlxTween.tween(icons[i].scale, {x: i == curSelected ? 5 : 4, y: i == curSelected ? 5 : 4}, 0.15, {ease: FlxEase.cubeOut});
+        }
+    }
+
+
+    function kbMove(dir:Int):Void
+    {
+        final list:Array<FlxSprite> = [bsky, youtube, twitter, endCredits];
+        var n:Int = kbIdx;
+        for (k in 0...list.length)
+        {
+            n += dir;
+            if (n >= list.length) n = 0;
+            if (n < 0) n = list.length - 1;
+            if (n == 3 || socialOn(list[n]))
+            {
+                kbIdx = n;
+                break;
+            }
+        }
+        FlxG.sound.play(Paths.sound("scrollMenu"), 0.8);
+        kbPaint();
+    }
+
+    function kbPaint():Void
+    {
+        final list:Array<FlxSprite> = [bsky, youtube, twitter, endCredits];
+        for (i in 0...list.length) list[i].color = (i == kbIdx) ? 0xFFFCFC00 : 0xFFFFFFFF;
+    }
+
+    function kbActivate():Void
+    {
+        switch (kbIdx)
+        {
+            case 0: if (socialOn(bsky)) FlxG.openURL(entries[curSelected][2]);
+            case 1: if (socialOn(youtube)) FlxG.openURL(entries[curSelected][3]);
+            case 2: if (socialOn(twitter)) FlxG.openURL(entries[curSelected][4]);
+            case 3: leaveTo("RewriteEndCreditsState", true);
+            default:
+        }
+    }
+
+    function socialOn(s:FlxSprite):Bool
+    {
+        return s.animation.curAnim != null && s.animation.curAnim.name == "enabled";
+    }
+
+    override function update(elapsed:Float):Void
+    {
+        super.update(elapsed);
+        readPointer();
+        dbgSet([up, down, bsky, youtube, twitter, endCredits, back]);
+        dbgUpdate();
+
+        final hoverAny:Bool = over(up) || over(down) || (over(bsky) && socialOn(bsky)) || (over(youtube) && socialOn(youtube)) || (over(twitter) && socialOn(twitter)) || over(endCredits) || over(back);
+
+        if (!allowInput) cursorAnim("wait");
+        else if (hoverAny) cursorAnim("hover");
+        else cursorAnim("default");
+
+        if (!allowInput) return;
+
+        if (ctl().BACK) leaveTo("RewriteMainMenuState", false);
+
+        if (ctl().UI_LEFT_P) kbMove(-1);
+        if (ctl().UI_RIGHT_P) kbMove(1);
+        if (ctl().ACCEPT && kbIdx >= 0) kbActivate();
+
+        if (ctl().UI_UP_P || (tap && over(up))) changeSelection(-1);
+        if (ctl().UI_DOWN_P || (tap && over(down))) changeSelection(1);
+
+        if (tap)
+        {
+            if (over(bsky) && socialOn(bsky)) FlxG.openURL(entries[curSelected][2]);
+            else if (over(youtube) && socialOn(youtube)) FlxG.openURL(entries[curSelected][3]);
+            else if (over(twitter) && socialOn(twitter)) FlxG.openURL(entries[curSelected][4]);
+            else if (over(endCredits)) leaveTo("RewriteEndCreditsState", true);
+            else if (over(back)) leaveTo("RewriteMainMenuState", false);
+        }
+    }
+
+    function leaveTo(name:String, silent:Bool):Void
+    {
+        if (!allowInput) return;
+        allowInput = false;
+        if (!silent) FlxG.sound.play(Paths.sound("cancelMenu"));
+        FlxG.camera.fade(0xFF000000, 0.9);
+        if (name != "RewriteMainMenuState") fadeMusicTo(0, 0.6);
+        FlxTween.tween(blueFade, {alpha: 1}, 0.6);
+        new FlxTimer().start(0.95, function(t1:FlxTimer) {
+            if (name == "RewriteEndCreditsState") sset("dataSelect", true);
+            if (!go(name))
+            {
+                // si la pantalla no existe todavia, se vuelve a los creditos
+                FlxG.camera.fade(0xFF000000, 0.001, true);
+                blueFade.alpha = 0.001;
+                allowInput = true;
+            }
+        });
+    }
+}

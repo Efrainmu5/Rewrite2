@@ -1,0 +1,198 @@
+import flixel.FlxG;
+import flixel.math.FlxMath;
+import funkin.play.PlayState;
+import funkin.play.GameOverSubState;
+import funkin.audio.FunkinSound;
+import funkin.data.song.SongRegistry;
+import funkin.modding.module.Module;
+
+class WiiMovementRewrite extends Module {
+   public function new() {
+     super('WiiMovementRewrite', 1);
+   }
+
+   var intensity:Float = 20;
+   var initialized = false;
+   var ismovement = true;
+   var curFocus = null;
+
+   var dadMovNoCam:Bool = false;
+   var dadMovEnable:Bool = true;
+   
+   var bfMovNoCam:Bool = false;
+   var bfMovEnable:Bool = true;
+
+   private inline function setCharFocus(char)
+   {
+        curFocus = switch (char)
+        {
+             case 0: "bf";
+             case 1: "dad";
+             case 2: "gf";
+             default: "dad";
+        }
+   }
+
+   override function onSongEvent(event:SongEventScriptEvent)
+   {
+      if (PlayState.instance == null || !initialized) return;
+
+      super.onSongEvent(event);
+      if (PlayState.instance == null)
+         return;
+
+      var eventData = event.eventData;
+
+      switch (eventData.eventKind)
+      {
+         case "FocusCamera":
+               setCharFocus(eventData.value.char);
+      }
+   }
+
+   override function onSongStart() {
+        super.onSongStart();
+        var game = PlayState.instance;
+
+        if (game == null) return;
+        
+        setCharFocus(1); 
+        initCamMovement();
+   }
+
+   function initCamMovement()
+   {
+      if (PlayState.instance == null) return;
+
+      ismovement = initialized = true;
+   }
+
+   function onUpdate(event:Dynamic) {
+      super.onUpdate(event);
+
+      if (PlayState.instance == null) return;
+      if (PlayState.instance.startingSong) return;
+      if (!initialized) return;
+      if (GameOverSubState.instance != null) return;
+
+      if (!ismovement) return;
+
+      var stage = PlayState.instance.currentStage;
+      if (stage == null) return;
+
+      var dad = stage.getDad();
+      var bf = stage.getBoyfriend();
+      var gf = stage.getGirlfriend();
+
+      var dadAnim = dad?.animation.curAnim?.name;
+      var bfAnim = bf?.animation.curAnim?.name;
+      var gfAnim = gf?.animation.curAnim?.name;
+
+      var applied = false;
+
+      if (dadMovEnable && dadAnim != null && (curFocus == "dad" || dadMovNoCam)) {
+         if (dadAnim.indexOf("sing") != -1) {
+            setMovement(dadAnim);
+            applied = true;
+         }
+      }
+
+      if (!applied && bfMovEnable && bfAnim != null && (curFocus == "bf" || bfMovNoCam)) {
+         if (bfAnim.indexOf("sing") != -1) {
+            setMovement(bfAnim);
+            applied = true;
+         }
+      }
+
+      if (!applied && curFocus == "gf" && gfAnim != null) {
+         if (gfAnim.indexOf("sing") != -1) {
+            setMovement(gfAnim);
+            applied = true;
+         }
+      }
+   }
+
+   private inline function setMovement(name:String)
+   {
+      switch(name)
+      {
+         case "singLEFT", "singLEFT-alt": updateMovement(-intensity, 0, -0.2);
+         case "singDOWN", "singDOWN-alt": updateMovement(0, intensity, 0);
+         case "singUP", "singUP-alt": updateMovement(0, -intensity, 0);
+         case "singRIGHT", "singRIGHT-alt": updateMovement(intensity, 0, 0.2);
+         case "idle": updateMovement(0, 0, 0);          
+      }
+   }
+
+   private inline function updateMovement(x, y, angle)
+   {
+      FlxG.camera.targetOffset.set(x, y);
+      FlxG.camera.angle = FlxMath.lerp(FlxG.camera.angle, angle, FlxG.camera.followLerp);
+   }
+
+   function onSongRetry(e:Dynamic)
+   {
+      super.onSongRetry(e);
+
+      FlxG.camera.angle = 0;
+      FlxG.camera.targetOffset.set(0, 0);
+   }
+
+   function onDestroy(event) { 
+      if (PlayState.instance == null || !initialized) return;
+
+      super.onDestroy(event); 
+      ismovement = false;
+   }
+
+   function DadC(change:Bool) {
+      dadMovNoCam = change;
+   }
+
+   function BfC(change:Bool) {
+      bfMovNoCam = change;
+   }
+
+   function DadOff(mov:Bool) {
+      dadMovEnable = mov;
+   }
+
+   function BfOff(mov:Bool) {
+      bfMovEnable = mov;
+   }
+
+   // Cancelar totalmente todo
+   function cancelAllMovement() {
+      ismovement = false;
+      dadMovNoCam = false;
+      dadMovEnable = false;
+      bfMovNoCam = false;
+      bfMovEnable = false;
+      intensity = 0;
+      FlxG.camera.angle = 0;
+      FlxG.camera.targetOffset.set(0, 0);
+   }
+
+   function resetDefaults() {
+      intensity = 20;
+      ismovement = true;
+      dadMovNoCam = false;
+      dadMovEnable = true;
+      bfMovNoCam = false;
+      bfMovEnable = true;
+      FlxG.camera.angle = 0;
+      FlxG.camera.targetOffset.set(0, 0);
+   }
+
+   function noMovement() {
+      intensity = 0;
+   }
+
+   function sisisiiMovement(n:Float) {
+      intensity = n;
+   }
+   
+   function lowMovement() {
+      intensity = 10;
+   }
+}

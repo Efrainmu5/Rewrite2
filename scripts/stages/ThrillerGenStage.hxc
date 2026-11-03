@@ -1,0 +1,1607 @@
+import flixel.FlxCamera;
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.addons.display.FlxRuntimeShader;
+import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxTimer;
+import funkin.Conductor;
+import funkin.Paths;
+import funkin.PlayerSettings;
+import funkin.Preferences;
+import funkin.graphics.FunkinSprite;
+import funkin.modding.events.ScriptEvent;
+import funkin.play.PlayState;
+import funkin.play.character.BaseCharacter;
+import funkin.play.character.CharacterDataParser;
+import funkin.play.character.CharacterType;
+import funkin.play.stage.Stage;
+import haxe.Exception;
+import openfl.display.BlendMode;
+import openfl.filters.ShaderFilter;
+import openfl.utils.Assets;
+import funkin.modding.module.ModuleHandler;
+
+class ThrillerGenStage extends Stage
+{
+  public function new()
+  {
+    super("tgen");
+  }
+
+  final LETTERBOX:Bool = true;
+  final BOX_W:Float = 820.0;
+  final SCRIPT_EVENTS:Bool = true;
+  final STRUM_CENTER_NUDGE:Float = 0.0;
+
+  final EV_ANIM:Bool = true;
+  final EV_ALPHA:Bool = true;
+  final EV_CHAR:Bool = false;
+
+  final SCARY_STEP:Int = 652;
+  final SCARY_ID:String = "bfSCARY";
+  final LYRIC_Z:Int = 97;
+
+  var areSpr:FunkinSprite = null;
+  var youSpr:FunkinSprite = null;
+  var readySpr:FunkinSprite = null;
+  var maziSpr:FunkinSprite = null;
+  var dreadSpr:FunkinSprite = null;
+  var itsSpr:FunkinSprite = null;
+  var beSpr:FunkinSprite = null;
+  var notSpr:FunkinSprite = null;
+  var afraidSpr:FunkinSprite = null;
+  var its2Spr:FunkinSprite = null;
+  var allSpr:FunkinSprite = null;
+  var okaySpr:FunkinSprite = null;
+  var letsSpr:FunkinSprite = null;
+  var playSpr:FunkinSprite = null;
+  var aSpr:FunkinSprite = null;
+  var gameSpr:FunkinSprite = null;
+  var fForSpr:FunkinSprite = null;
+  var oldSpr:FunkinSprite = null;
+  var timesSpr:FunkinSprite = null;
+  var sakeSpr:FunkinSprite = null;
+  var youareSpr:FunkinSprite = null;
+  var iamgSpr:FunkinSprite = null;
+  var iamsSpr:FunkinSprite = null;
+
+  final EV:Array<Dynamic> = [
+    [0, "anim", "bf", "stare"],
+    [80, "anim", "bf", "blink"],
+    [83, "anim", "bf", "stare"],
+    [96, "anim", "dad", "intro"],
+    [96, "alpha", "dad", 1],
+    [128, "lyrics", "la", ""],
+    [132, "lyrics", "la", ""],
+    [136, "lyrics", "la", ""],
+    [138, "lyrics", "la", ""],
+    [140, "lyrics", "la", ""],
+    [142, "lyrics", "la", ""],
+    [144, "lyrics", "la", ""],
+    [148, "lyrics", "la", ""],
+    [152, "lyrics", "la", ""],
+    [156, "lyrics", "la", ""],
+    [160, "lyrics", "", ""],
+    [160, "anim", "dad", "areyouready"],
+    [164, "lyrics", "", ""],
+    [168, "lyrics", "", ""],
+    [172, "lyrics", "", ""],
+    [175, "lyrics", "", "delete"],
+    [176, "lyrics", "", ""],
+    [184, "lyrics", "", ""],
+    [192, "lyrics", "", ""],
+    [204, "lyrics", "", ""],
+    [216, "lyrics", "", ""],
+    [224, "lyrics", "", ""],
+    [352, "lyrics", "", ""],
+    [352, "anim", "dad", "benotafraid"],
+    [356, "lyrics", "", ""],
+    [360, "lyrics", "", ""],
+    [364, "lyrics", "", ""],
+    [368, "lyrics", "", ""],
+    [372, "lyrics", "", ""],
+    [376, "lyrics", "", ""],
+    [384, "lyrics", "", ""],
+    [388, "lyrics", "", ""],
+    [392, "lyrics", "", ""],
+    [396, "lyrics", "", ""],
+    [400, "lyrics", "", ""],
+    [404, "lyrics", "", ""],
+    [408, "lyrics", "", ""],
+    [412, "lyrics", "", ""],
+    [416, "lyrics", "", "vanish"],
+    [418, "lyrics", "", "schmoovin"],
+    [420, "lyrics", "", "schmoovin"],
+    [422, "lyrics", "", "schmoovin"],
+    [424, "lyrics", "", "schmoovin"],
+    [426, "lyrics", "", "schmoovin"],
+    [428, "lyrics", "", "schmoovin"],
+    [429, "lyrics", "", "schmoovin"],
+    [430, "lyrics", "", "schmoovin"],
+    [431, "lyrics", "", "schmoovin"],
+    [432, "lyrics", "", ""],
+    [432, "char", "dad", "sonicFirstPerson"],
+    [448, "lyrics", "", "countdown"],
+    [452, "lyrics", "", "countdown"],
+    [456, "lyrics", "", "countdown"],
+    [460, "lyrics", "", "countdown"],
+    [464, "lyrics", "", "countdown"],
+    [576, "lyrics", "", ""],
+    [578, "lyrics", "", ""],
+    [580, "lyrics", "", ""],
+    [584, "lyrics", "", ""],
+    [586, "lyrics", "", ""],
+    [588, "lyrics", "", ""],
+    [592, "lyrics", "", ""],
+    [592, "anim", "dad", "twitterStinksImLeaving"],
+    [648, "lyrics", "", ""],
+    [648, "camalpha", "camGame", 1],
+    [648, "camalpha", "camHUD", 1],
+    [650, "lyrics", "", ""],
+    [652, "lyrics", "", ""],
+    [654, "lyrics", "", ""],
+    [656, "lyrics", "", ""],
+  ];
+
+  var ps:PlayState = null;
+  var ready:Bool = false;
+  var running:Bool = false;
+  var dt:Float = 0.0;
+  var mobile:Bool = false;
+
+  var shadersOn:Bool = true;
+  var flashing:Bool = true;
+
+  var stepI:Int = -1;
+  var evI:Int = 0;
+
+  var timers:Array<FlxTimer> = [];
+
+  var twB:FlxTween = null;
+  var twC:FlxTween = null;
+  var twS:FlxTween = null;
+  var twShake:FlxTween = null;
+
+  var bfId0:String = null;
+
+  var sky:FunkinSprite = null;
+  var mountains:FunkinSprite = null;
+  var farLayer:FunkinSprite = null;
+  var backLayer:FunkinSprite = null;
+  var frontLayer:FunkinSprite = null;
+  var bgDark:FunkinSprite = null;
+  var trees:FunkinSprite = null;
+  var floorSpr:FunkinSprite = null;
+  var trippy:FunkinSprite = null;
+  var outro:FunkinSprite = null;
+  var redSpr:FunkinSprite = null;
+  var whiteGame:FunkinSprite = null;
+
+  var blueSpr:FunkinSprite = null;
+  var segaSpr:FunkinSprite = null;
+  var iAmSonic:FunkinSprite = null;
+  var tgTitle:FunkinSprite = null;
+  var camBars:FlxCamera = null;
+
+  var brightness:Float = 0.0;
+  var contrast:Float = 1.0;
+  var saturation:Float = 1.0;
+  var gradeShader:FlxRuntimeShader = null;
+  var titleShader:FlxRuntimeShader = null;
+  var glitchCam:FlxRuntimeShader = null;
+  var glitchDad:FlxRuntimeShader = null;
+  var gradeFilter:ShaderFilter = null;
+  var glitchFilter:ShaderFilter = null;
+
+  var safety656:Bool = false;
+  var stopZoom:Bool = false;
+  var dadGone:Bool = false;
+  var scaryDone:Bool = false;
+  var started:Bool = false;
+
+  var shakeLevel:Float = 0.0;
+
+  var lyricNum:Int = 0;
+  var laNum:Int = 1;
+  var countNum:Int = 4;
+  var countdownTGE:FunkinSprite = null;
+  var transformation:Bool = false;
+  var FP:Bool = false;
+  var miderata:Bool = false;
+  var bfScary:Bool = false;
+
+  function readOptions():Void
+  {
+    mobile = FlxG.onMobile;
+    try
+    {
+      flashing = Preferences.flashingLights;
+    }
+    catch (e:Exception)
+    {
+      flashing = true;
+    }
+  }
+
+  function after(sec:Float, fn:Dynamic):FlxTimer
+  {
+    final t:FlxTimer = new FlxTimer().start(sec, function(tm:FlxTimer) {
+      fn();
+    });
+    timers.push(t);
+    return t;
+  }
+
+  function cancelTimers():Void
+  {
+    for (t in timers) if (t != null) t.cancel();
+    timers = [];
+  }
+
+  function ease(name:String):Dynamic
+  {
+    switch (name)
+    {
+      case "quadIn": return FlxEase.quadIn;
+      case "quadOut": return FlxEase.quadOut;
+      case "quadInOut": return FlxEase.quadInOut;
+      case "quintIn": return FlxEase.quintIn;
+      case "quintOut": return FlxEase.quintOut;
+      case "sineOut": return FlxEase.sineOut;
+      case "bounceOut": return FlxEase.bounceOut;
+      case "expoOut": return FlxEase.expoOut;
+      default: return FlxEase.linear;
+    }
+  }
+
+  function cancelTw(t:FlxTween):Void
+  {
+    if (t != null) t.cancel();
+  }
+
+  function tv(name:String, to:Float, dur:Float, easeName:String):Void
+  {
+    if (dur <= 0.0)
+    {
+      setVar(name, to);
+      return;
+    }
+
+    final from:Float = getVar(name);
+    final e:Dynamic = ease(easeName);
+
+    switch (name)
+    {
+      case "brightness":
+        cancelTw(twB);
+        twB = FlxTween.num(from, to, dur, {ease: e}, function(v:Float) { brightness = v; });
+      case "contrast":
+        cancelTw(twC);
+        twC = FlxTween.num(from, to, dur, {ease: e}, function(v:Float) { contrast = v; });
+      case "saturation":
+        cancelTw(twS);
+        twS = FlxTween.num(from, to, dur, {ease: e}, function(v:Float) { saturation = v; });
+      case "shake":
+        cancelTw(twShake);
+        twShake = FlxTween.num(from, to, dur, {ease: e}, function(v:Float) { shakeLevel = v; });
+      default:
+    }
+  }
+
+  function getVar(name:String):Float
+  {
+    switch (name)
+    {
+      case "brightness": return brightness;
+      case "contrast": return contrast;
+      case "saturation": return saturation;
+      case "shake": return shakeLevel;
+      default: return 0.0;
+    }
+  }
+
+  function setVar(name:String, v:Float):Void
+  {
+    switch (name)
+    {
+      case "brightness": brightness = v;
+      case "contrast": contrast = v;
+      case "saturation": saturation = v;
+      case "shake": shakeLevel = v;
+      default:
+    }
+  }
+
+  function grade(b:Float, c:Float, s:Float):Void
+  {
+    cancelTw(twB);
+    cancelTw(twC);
+    cancelTw(twS);
+    brightness = b;
+    contrast = c;
+    saturation = s;
+  }
+
+  function gradeTo(b:Float, c:Float, s:Float, dur:Float, easeName:String):Void
+  {
+    tv("brightness", b, dur, easeName);
+    tv("contrast", c, dur, easeName);
+    tv("saturation", s, dur, easeName);
+  }
+
+  function tweenAlpha(spr:FlxSprite, to:Float, dur:Float, easeName:String):Void
+  {
+    if (spr == null) return;
+    FlxTween.cancelTweensOf(spr);
+    FlxTween.tween(spr, {alpha: to}, dur, {ease: ease(easeName)});
+  }
+
+  function charBySlot(slot:String):BaseCharacter
+  {
+    switch (slot)
+    {
+      case "dad": return getDad();
+      case "bf": return getBoyfriend();
+      case "gf": return getGirlfriend();
+      default: return null;
+    }
+  }
+
+  final GRADE_FALLBACK:String = "#pragma header\nuniform float brightness;\nuniform float contrast;\nuniform float saturation;\nvoid main()\n{\n  vec4 px = flixel_texture2D(bitmap, openfl_TextureCoordv);\n  if (px.a <= 0.0) { gl_FragColor = px; return; }\n  vec3 rgb = px.rgb / px.a;\n  rgb += brightness;\n  rgb = 0.5 + contrast * (rgb - 0.5);\n  float l = dot(rgb, vec3(0.299, 0.587, 0.114));\n  rgb = mix(vec3(l), rgb, saturation);\n  gl_FragColor = vec4(clamp(rgb, 0.0, 1.0) * px.a, px.a);\n}\n";
+
+  function setupShaders():Void
+  {
+    try
+    {
+      gradeShader = new FlxRuntimeShader(Assets.getText(Paths.frag("contrast")));
+    }
+    catch (e:Exception)
+    {
+      gradeShader = new FlxRuntimeShader(GRADE_FALLBACK);
+    }
+
+    try
+    {
+      titleShader = new FlxRuntimeShader(Assets.getText(Paths.frag("contrast")));
+    }
+    catch (e:Exception)
+    {
+      titleShader = new FlxRuntimeShader(GRADE_FALLBACK);
+    }
+
+    try { glitchCam = new FlxRuntimeShader(Assets.getText(Paths.frag("intenseGlitch"))); } catch (e:Exception) {}
+    try { glitchDad = new FlxRuntimeShader(Assets.getText(Paths.frag("glitch"))); } catch (e:Exception) {}
+
+    if (gradeShader != null)
+    {
+      gradeFilter = new ShaderFilter(gradeShader);
+      if (glitchCam != null) glitchFilter = new ShaderFilter(glitchCam);
+      applyFilters(false);
+    }
+  }
+
+  function applyFilters(withGlitch:Bool):Void
+  {
+    if (gradeShader == null) return;
+    ps.camGame.filters = [gradeFilter];
+    if (withGlitch && glitchFilter != null) ps.camHUD.filters = [gradeFilter, glitchFilter];
+    else ps.camHUD.filters = [gradeFilter];
+  }
+
+  function updateShaders():Void
+  {
+    final t:Float = Conductor.instance.songPosition * 0.001;
+
+    if (gradeShader != null)
+    {
+      gradeShader.setFloat("brightness", brightness);
+      gradeShader.setFloat("contrast", contrast);
+      gradeShader.setFloat("saturation", saturation);
+    }
+
+    if (titleShader != null)
+    {
+      titleShader.setFloat("brightness", brightness);
+      titleShader.setFloat("contrast", contrast);
+      titleShader.setFloat("saturation", saturation);
+    }
+
+    if (glitchCam != null) glitchCam.setFloat("iTime", t * 2.0);
+    if (glitchDad != null) glitchDad.setFloat("iTime", t);
+  }
+
+  function mkLayer(key:String, x:Float, y:Float, sc:Float, sf:Float, z:Int):FunkinSprite
+  {
+    final s:FunkinSprite = new FunkinSprite();
+    s.loadGraphic(Paths.image(key));
+    s.antialiasing = false;
+    s.scale.set(sc, sc);
+    s.updateHitbox();
+    s.setPosition(x, y);
+    s.scrollFactor.set(sf, sf);
+    s.zIndex = z;
+    add(s);
+    return s;
+  }
+
+  function solid(w:Float, h:Float, color:Int):FunkinSprite
+  {
+    final s:FunkinSprite = new FunkinSprite();
+    s.makeSolidColor(Std.int(w), Std.int(h), color);
+    s.antialiasing = false;
+    return s;
+  }
+
+  function hudAdd(spr:FlxSprite, cam:FlxCamera, z:Int):Void
+  {
+    spr.scrollFactor.set(0, 0);
+    spr.zIndex = z;
+    ps.add(spr);
+    spr.cameras = [cam];
+    ps.refresh();
+  }
+
+  function spawnLyric(spr:FunkinSprite, z:Int):Void
+  {
+    spr.zIndex = z;
+    add(spr);
+    ps.currentStage.refresh();
+  }
+
+  function buildBackground():Void
+  {
+    sky = mkLayer("tgeBG/sky", 100, -120, 3, 0.2, 10);
+    mountains = mkLayer("tgeBG/mountains", -20, 0, 3.8, 0.5, 20);
+    farLayer = mkLayer("tgeBG/farLayer", 100, 270, 3.22, 0.6, 30);
+    backLayer = mkLayer("tgeBG/backLayer", 65, 350, 3.22, 0.8, 40);
+    frontLayer = mkLayer("tgeBG/frontLayer", 80, 440, 3.22, 1, 50);
+
+    bgDark = solid(2400, 2400, 0xFF070727);
+    bgDark.scrollFactor.set(0, 0);
+    bgDark.setPosition((FlxG.width - 2400) / 2, (FlxG.height - 2400) / 2);
+    bgDark.zIndex = 60;
+    bgDark.alpha = 0.001;
+    add(bgDark);
+
+    trees = mkLayer("tgeBG/trees", 250, 440, 2, 0.8, 70);
+    trees.alpha = 0.001;
+    floorSpr = mkLayer("tgeBG/floor", 230, 525, 2, 1, 80);
+    floorSpr.alpha = 0.001;
+
+    trippy = new FunkinSprite();
+    trippy.frames = Paths.getSparrowAtlas("trippyBG");
+    trippy.animation.addByPrefix("trippyBG", "trippyBG", 15, true);
+    trippy.animation.play("trippyBG");
+    trippy.antialiasing = false;
+    trippy.scale.set(6, 6);
+    trippy.updateHitbox();
+    trippy.setPosition(0, 0);
+    trippy.scrollFactor.set(0, 0);
+    trippy.zIndex = 90;
+    trippy.alpha = 0.001;
+    if (!flashing) trippy.visible = false;
+    add(trippy);
+
+    outro = new FunkinSprite();
+    outro.frames = Paths.getSparrowAtlas("tgeOutro");
+    outro.animation.addByPrefix("Outro", "tgo", 15, false);
+    outro.animation.play("Outro");
+    outro.animation.pause();
+    outro.antialiasing = false;
+    outro.scale.set(3.22, 3.22);
+    outro.updateHitbox();
+    outro.setPosition(230, 0);
+    outro.scrollFactor.set(0, 0);
+    outro.zIndex = 95;
+    outro.alpha = 0.001;
+    add(outro);
+
+    redSpr = solid(2400, 1400, 0xFFFF0000);
+    redSpr.blend = BlendMode.MULTIPLY;
+    redSpr.scrollFactor.set(0, 0);
+    redSpr.setPosition((FlxG.width - 2400) / 2, (FlxG.height - 1400) / 2);
+    redSpr.zIndex = 600;
+    redSpr.alpha = 0.001;
+    add(redSpr);
+
+    whiteGame = solid(3000, 2000, 0xFFFFFFFF);
+    whiteGame.scrollFactor.set(0, 0);
+    whiteGame.setPosition((FlxG.width - 3000) / 2, (FlxG.height - 2000) / 2);
+    whiteGame.zIndex = 650;
+    whiteGame.alpha = 0.001;
+    add(whiteGame);
+  }
+
+  function buildOverlays():Void
+  {
+    blueSpr = solid(FlxG.width + 64, FlxG.height + 64, 0xFF0000FF);
+    blueSpr.blend = BlendMode.MULTIPLY;
+    blueSpr.setPosition(-32, -32);
+    blueSpr.alpha = 0.001;
+    hudAdd(blueSpr, ps.camCutscene, 3300);
+
+    segaSpr = new FunkinSprite();
+    segaSpr.loadGraphic(Paths.image("spookySega"));
+    segaSpr.antialiasing = false;
+    segaSpr.scale.set(3.25, 3.25);
+    segaSpr.updateHitbox();
+    segaSpr.setPosition(230, 0);
+    segaSpr.alpha = 0.001;
+    hudAdd(segaSpr, ps.camHUD, 3200);
+
+    iAmSonic = new FunkinSprite();
+    iAmSonic.frames = Paths.getSparrowAtlas("characters/sonicTGE");
+    iAmSonic.animation.addByPrefix("I Am", "1iAm", 1, false);
+    iAmSonic.animation.addByPrefix("Sonic", "2sonic", 1, false);
+    iAmSonic.animation.play("I Am");
+    iAmSonic.antialiasing = false;
+    iAmSonic.scale.set(3, 3);
+    iAmSonic.updateHitbox();
+    iAmSonic.setPosition(250, 50);
+    iAmSonic.alpha = 0.001;
+    hudAdd(iAmSonic, ps.camCutscene, 3250);
+
+    tgTitle = new FunkinSprite();
+    tgTitle.loadGraphic(Paths.image("titleCard/thrillerGenPlaceHolder"));
+    tgTitle.antialiasing = false;
+    tgTitle.scale.set(3.25, 3.25);
+    tgTitle.updateHitbox();
+    tgTitle.setPosition(230, 0);
+    tgTitle.alpha = 0.001;
+    hudAdd(tgTitle, ps.camCutscene, 3280);
+    if (titleShader != null) tgTitle.shader = titleShader;
+
+    countdownTGE = new FunkinSprite();
+    countdownTGE.frames = Paths.getSparrowAtlas("countdown");
+    countdownTGE.animation.addByPrefix("three", "three", 10, false);
+    countdownTGE.animation.addByPrefix("two", "two", 10, false);
+    countdownTGE.animation.addByPrefix("one", "one", 10, false);
+    countdownTGE.animation.addByPrefix("go", "go", 15, false);
+    countdownTGE.antialiasing = false;
+    countdownTGE.animation.play("three", true);
+    countdownTGE.scale.set(1, 1);
+    countdownTGE.updateHitbox();
+    countdownTGE.setPosition(570, 275);
+    countdownTGE.scrollFactor.set(0, 0);
+    countdownTGE.alpha = 0.001;
+    hudAdd(countdownTGE, ps.camCutscene, 3290);
+  }
+
+  function buildBars():Void
+  {
+    if (!LETTERBOX) return;
+    final side:Float = (FlxG.width - BOX_W) / 2;
+    if (side <= 0) return;
+
+    camBars = new FlxCamera();
+    camBars.bgColor = 0x00000000;
+    FlxG.cameras.add(camBars, false);
+
+    final l:FunkinSprite = solid(side, FlxG.height, 0xFF000000);
+    l.setPosition(0, 0);
+    hudAdd(l, camBars, 3400);
+
+    final r:FunkinSprite = solid(side + 1, FlxG.height, 0xFF000000);
+    r.setPosition(FlxG.width - side, 0);
+    hudAdd(r, camBars, 3400);
+  }
+
+  override function onCreate(event:ScriptEvent):Void
+  {
+    super.onCreate(event);
+    ps = PlayState.instance;
+
+    readOptions();
+    setupShaders();
+    buildBackground();
+    buildOverlays();
+    buildBars();
+    ps.refresh();
+
+    resetVisuals();
+  }
+
+  function hideVanillaHud():Void
+  {
+    ps.healthBar?.visible = false;
+    ps.healthBarBG?.visible = false;
+    ps.iconP1?.visible = false;
+    ps.iconP2?.visible = false;
+    try { ps.scoreText?.visible = false; } catch (e:Exception) {}
+  }
+
+  function firstUpdate():Void
+  {
+    ready = true;
+    hideVanillaHud();
+    ModuleHandler.activateModule("WiiMovementRewrite");
+    ModuleHandler.activateModule("RewriteHealthModule");
+
+    ps.opponentStrumline.visible = false;
+    try
+    {
+      ps.playerStrumline.x = (FlxG.width - ps.playerStrumline.width) / 2 + STRUM_CENTER_NUDGE;
+    }
+    catch (e:Exception) {}
+
+    bfId0 = getBoyfriend()?.characterId;
+
+    ModuleHandler.getModule('WiiMovementRewrite').scriptCall('resetDefaults');
+  }
+
+  function resetVisuals():Void
+  {
+    cancelTimers();
+    cancelTw(twB);
+    cancelTw(twC);
+    cancelTw(twS);
+    cancelTw(twShake);
+
+    stepI = -1;
+    evI = 0;
+    safety656 = false;
+    stopZoom = false;
+    dadGone = false;
+    started = false;
+    running = false;
+    scaryDone = false;
+    bfScary = false;
+    shakeLevel = 0.0;
+    lyricNum = 0;
+    laNum = 1;
+    countNum = 4;
+
+    grade(-2, 3, 2);
+
+    for (s in [sky, mountains, farLayer, backLayer, frontLayer])
+    {
+      if (s != null)
+      {
+        s.visible = true;
+        s.alpha = 1;
+      }
+    }
+    for (s in [bgDark, trees, floorSpr, trippy, outro, redSpr, whiteGame, blueSpr, segaSpr, iAmSonic, tgTitle])
+    {
+      if (s != null)
+      {
+        s.visible = true;
+        s.alpha = 0.001;
+      }
+    }
+    if (trippy != null && !flashing) trippy.visible = false;
+    if (outro != null)
+    {
+      outro.animation.play("Outro");
+      outro.animation.pause();
+    }
+    if (iAmSonic != null) iAmSonic.animation.play("I Am");
+
+    if (ps != null)
+    {
+      ps.camGame.alpha = 0.001;
+      ps.camHUD.alpha = 0.001;
+      ps.camGame.visible = true;
+      ps.camHUD.visible = true;
+      applyFilters(false);
+    }
+  }
+
+  override function onSongRetry(event:ScriptEvent):Void
+  {
+    super.onSongRetry(event);
+    cancelTimers();
+    FlxG.resetState();
+    ready = false;
+  }
+
+  override function onDestroy(event:ScriptEvent):Void
+  {
+    cancelTimers();
+    super.onDestroy(event);
+  }
+
+  override function onGameOver(event:ScriptEvent):Void
+  {
+    super.onGameOver(event);
+    cancelTimers();
+  }
+
+  override function onCountdownStart(event:CountdownScriptEvent):Void
+  {
+    if (started)
+    {
+      super.onCountdownStart(event);
+      return;
+    }
+
+    event.cancel();
+    super.onCountdownStart(event);
+
+    final game:PlayState = PlayState.instance;
+    game.isInCountdown = true;
+    game.mayPauseGame = true;
+
+    after(0.75, function() {
+      FlxG.sound.play(Paths.sound("begin"));
+      tweenAlpha(tgTitle, 1, 0.3, "linear");
+      gradeTo(0, 1, 1, 0.3, "linear");
+      tweenAlpha(blueSpr, 0, 0.3, "linear");
+    });
+
+    after(2.75, function() {
+      tweenAlpha(tgTitle, 0, 0.3, "linear");
+      gradeTo(-2, 3, 2, 0.3, "linear");
+      ps.camGame.fade(0xFF000000, 0.01);
+      tweenAlpha(blueSpr, 1, 0.3, "linear");
+    });
+
+    after(3.75, function() {
+      if (started) return;
+      running = true;
+      started = true;
+      game.mayPauseGame = false;
+      game.startingSong = true;
+    });
+
+    firstUpdate();
+  }
+
+  override function onUpdate(event:UpdateScriptEvent):Void
+  {
+    super.onUpdate(event);
+    dt = event.elapsed;
+
+    if (!ready) firstUpdate();
+
+    updateShaders();
+    if (!running) return;
+
+    tickTimeline();
+    updateBfFade();
+  }
+
+  function tickTimeline():Void
+  {
+    final st:Float = Conductor.instance.currentStepTime;
+    final cur:Int = Std.int(Math.floor(st));
+
+    if (SCRIPT_EVENTS)
+    {
+      while (evI < EV.length && EV[evI][0] <= st)
+      {
+        fireEvent(EV[evI]);
+        evI++;
+      }
+    }
+
+    while (stepI < cur)
+    {
+      stepI++;
+      onStepScript(stepI);
+    }
+  }
+
+  function screenFlash():Void
+  {
+    ps.camGame.visible = false;
+    after(0.1, function() { ps.camGame.visible = true; });
+  }
+
+  function dadAnim(name:String):Void
+  {
+    getDad()?.playAnimation(name, true, true);
+  }
+
+  function setGrade(b:Float, c:Float, s:Float):Void
+  {
+    if (flashing) grade(b, c, s);
+  }
+
+  function onStepScript(step:Int):Void
+  {
+    final dad:BaseCharacter = getDad();
+    final bf:BaseCharacter = getBoyfriend();
+
+    switch (step)
+    {
+      case 0:
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("sisisiiMovement", [15]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadOff", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfOff", [true]);
+        miderata = false;
+        transformation = false;
+        getDad().alpha = 0;
+        getGirlfriend().alpha = 0;
+        getBoyfriend().alpha = 1;
+        ps.camGame.alpha = 0.001;
+        ps.camHUD.alpha = 0.001;
+
+      case 32:
+        gradeTo(0, 1, 1, 0.5, "quadOut");
+        ps.camGame.fade(0xFF000000, 0.5, true);
+        ps.camGame.alpha = 1;
+        tweenAlpha(blueSpr, 0, 0.6, "quadIn");
+
+      case 208:
+        tweenAlpha(ps.camHUD, 1, 1, "linear");
+      case 413:
+        transformation = true;
+      case 416:
+        gradeTo(-0.5, 2, 2, 1.2, "quadIn");
+        screenFlash();
+        dadAnim("miles");
+      case 420:
+        screenFlash();
+        dadAnim("ekiduna");
+
+      case 424:
+        screenFlash();
+        dadAnim("ivo");
+
+      case 428:
+        screenFlash();
+        dadAnim("theFunnyBoi");
+        setGrade(0, 1, 1);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("sisisiiMovement", [25]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadOff", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfOff", [false]);
+
+      case 429:
+        if (flashing)
+        {
+          grade(1, 2, 2);
+          ps.camGame.visible = false;
+          ps.camHUD.visible = false;
+        }
+
+      case 430:
+        if (flashing) ps.camGame.visible = true;
+
+      case 431:
+        ps.camGame.visible = false;
+        ps.camHUD.visible = false;
+        grade(0.5, 3, 4);
+        blueSpr.alpha = 1;
+        FP = true;
+
+      case 432:
+        for (s in [sky, mountains, farLayer, backLayer, frontLayer]) s.visible = false;
+        trees.alpha = 1;
+        floorSpr.alpha = 1;
+        bgDark.alpha = 1;
+
+      case 434:
+        ps.camHUD.fade(0xFF000000, 0.25, true);
+        ps.camGame.fade(0xFF000000, 0.8, true);
+        tweenAlpha(blueSpr, 0, 1.2, "quadIn");
+        ps.camGame.visible = true;
+        ps.camHUD.visible = true;
+        getBoyfriend().visible = false;
+        grade(0, 1, 1);
+
+      case 592:
+        tweenAlpha(ps.camHUD, 0, 1, "quadIn");
+
+      case 624:
+        tweenAlpha(floorSpr, 0, 2, "quadOut");
+        tweenAlpha(trees, 0, 2, "quadOut");
+        tweenAlpha(blueSpr, 1, 2, "quadOut");
+
+      case 646:
+        FP = false;
+        getBoyfriend().visible = false;
+        ps.camHUD.visible = false;
+        floorSpr.visible = false;
+        treesHide();
+        for (s2 in [sky, mountains, farLayer, backLayer, frontLayer]) s2.visible = false;
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("sisisiiMovement", [0]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfC", [true]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("DadOff", [false]);
+        ModuleHandler.getModule("WiiMovementRewrite")?.scriptCall("BfOff", [false]);
+
+      case 648:
+        iAmSonic.alpha = 1;
+
+      case 652:
+        iAmSonic.animation.play("Sonic", true);
+        miderata = true;
+      case 655:
+        getDad().x = 520;
+        getDad().y = 1200;
+        transformation = false;
+        getBoyfriend().x = 300;
+        getBoyfriend().y = 960;
+
+      case 660:
+        setGrade(2, 3, 3);
+        shakeLevel = 100;
+        tv("shake", 0, 0.25, "linear");
+
+      case 664:
+        setGrade(0, 1, 2);
+        shakeLevel = 100;
+        tv("shake", 0, 0.25, "linear");
+
+      case 668:
+        setGrade(0.5, 2, 2);
+        shakeLevel = 100;
+        tv("shake", 0, 0.25, "linear");
+
+      case 672:
+        setGrade(0, 2, 1);
+
+      case 680:
+        setGrade(1, 2.5, 0.5);
+
+      case 686:
+        setGrade(-1, 1, 3);
+
+      case 688:
+        setGrade(0, 2, 1);
+        shakeLevel = 100;
+        tv("shake", 0, 0.2, "linear");
+
+      case 692:
+        setGrade(1, 1, 3);
+        shakeLevel = 100;
+        tv("shake", 0, 0.2, "linear");
+
+      case 696:
+        setGrade(-0.5, 1.5, 1.5);
+        shakeLevel = 100;
+        tv("shake", 0, 0.2, "linear");
+
+      case 700:
+        setGrade(0, 1, 1);
+        shakeLevel = 100;
+        tv("shake", 0, 0.2, "linear");
+
+      case 704:
+        setGrade(0, 2, 2);
+
+      case 712:
+        setGrade(0, 2, 1);
+        shakeLevel = 100;
+        tv("shake", 0, 0.15, "linear");
+        ps.camHUD.visible = true;
+        tweenAlpha(ps.camHUD, 1, 0.5, "linear");
+
+      case 716:
+        setGrade(-1, 3, 2);
+        shakeLevel = 100;
+        tv("shake", 0, 0.15, "linear");
+
+      case 718:
+        setGrade(0, 1, 1);
+
+      case 720:
+        tweenAlpha(trippy, 0, 0.5, "quadOut");
+        tweenAlpha(redSpr, 1, 0.6, "quadOut");
+        dadAnim("idle");
+        setFrameRate(dad, 8);
+        gradeTo(1, 3, 1.5, 1, "quadOut");
+        shakeLevel = 8;
+
+      case 752:
+        shakeLevel = 8;
+
+      case 780:
+        segaSpr.alpha = 1;
+        grade(0, 1, 1);
+        shakeLevel = 50;
+        tv("shake", 8, 0.2, "linear");
+
+      case 784:
+        segaSpr.alpha = 0;
+        redSpr.alpha = 0;
+        trippy.alpha = 0.33;
+        dadAnim("idle");
+        grade(0, 1.25, 1.5);
+        setFrameRate(dad, 18);
+
+      case 844:
+        getDad().forceAnimationForDuration("transition", 1);
+
+      case 848:
+        tweenAlpha(trippy, 0.33, 1, "quadOut");
+        tweenAlpha(redSpr, 0, 1, "quadOut");
+        getDad().forceAnimationForDuration("idleHead", 8);
+
+      case 887:
+        getDad().forceAnimationForDuration("laugh", 5);
+
+      case 908:
+        shakeLevel = 50;
+        tv("shake", 8, 0.2, "linear");
+
+      case 912:
+        dad?.visible = false;
+        bf?.visible = false;
+        getGirlfriend()?.visible = false;
+        shakeLevel = 100;
+        tv("shake", 0, 2, "linear");
+        ps.camCutscene.flash(0xFFFF0000, 2, null, true);
+        ps.camHUD.alpha = 0;
+        trippy.alpha = 0;
+
+      case 976:
+        stopZoom = true;
+        outro.alpha = 1;
+        outro.animation.play("Outro", true);
+        ps.camGame.fade(0xFF000000, 1, true);
+        blueSpr.alpha = 1;
+        tweenAlpha(blueSpr, 0, 1, "quadIn");
+
+      default:
+    }
+
+
+    if (step >= 656 && !safety656)
+    {
+      safety656 = true;
+      iAmSonic.alpha = 0;
+      bgDark.visible = false;
+      trippy.alpha = 1;
+
+      if (shadersOn)
+      {
+        if (flashing && glitchDad != null && dad != null)
+        {
+          dad.shader = glitchDad;
+          grade(0.5, 2, 2);
+        }
+        applyFilters(true);
+      }
+      shakeLevel = 100;
+      tv("shake", 0, 0.3, "linear");
+
+      if (dad != null)
+      {
+        dad.y = 350;
+        dad.alpha = 1;
+        dad.visible = true;
+      }
+    }
+
+    if (dad.animation.curAnim.name == "twitterStinksImLeaving" && !dadGone)
+    {
+      if (dad.animation.curAnim.finished || dad.animation.curAnim.curFrame >= dad.animation.curAnim.numFrames - 1)
+      {
+        dad.alpha = 0;
+        dad.visible = false;
+        dadGone = true;
+      }
+    }
+  }
+
+  function treesHide():Void
+  {
+    trees.visible = false;
+  }
+
+  function setFrameRate(ch:BaseCharacter, fps:Float):Void
+  {
+    try
+    {
+      if (ch != null && ch.animation.curAnim != null) ch.animation.curAnim.frameRate = fps;
+    }
+    catch (e:Exception) {}
+  }
+
+  function fireEvent(e:Array<Dynamic>):Void
+  {
+    switch (e[1])
+    {
+      case "anim":
+        if (EV_ANIM) charBySlot(e[2])?.playAnimation(e[3]);
+      case "alpha":
+        if (EV_ALPHA)
+        {
+          final ch2:BaseCharacter = charBySlot(e[2]);
+          if (ch2 != null) { ch2.alpha = e[3]; ch2.visible = true; }
+        }
+      case "camalpha":
+        if (EV_ALPHA)
+        {
+          if (e[2] == "camGame") ps.camGame.alpha = e[3];
+          else ps.camHUD.alpha = e[3];
+        }
+      case "char":
+      case "lyrics":
+        lyric(e[2], e[3]);
+      default:
+    }
+  }
+
+  function lyric(v1:String, v2:String):Void
+  {
+    if (v1 == "la")
+    {
+      final offsetX = 270;
+      final offsetY = 80;
+      final dad = getDad();
+      final dx:Float = dad.x;
+      final dy:Float = dad.y;
+
+      final la:FunkinSprite = new FunkinSprite();
+      la.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+      la.antialiasing = false;
+      la.scale.set(2, 2);
+      la.updateHitbox();
+      la.setPosition(dx + offsetX, dy + offsetY);
+      ps.refresh();
+
+      final randAnim:Int = FlxG.random.int(1, 7);
+      la.animation.addByPrefix("la", randAnim + "la", 1, false);
+      la.animation.play("la");
+      spawnLyric(la, LYRIC_Z);
+
+      FlxTween.tween(la, {x: la.x + FlxG.random.int(200, 300), y: la.y + FlxG.random.int(-200, -100), alpha: 0}, 1.0, {ease: FlxEase.quadIn, onComplete: function(t:FlxTween) {
+        la.destroy();
+      }});
+
+      laNum++;
+    }
+    else
+    {
+      if (v2 == "")
+      {
+        lyricNum++;
+        triggerLyricStep(lyricNum);
+      }
+      else if (v2 == "vanish")
+      {
+        for (s in [letsSpr, playSpr, aSpr, gameSpr, fForSpr, oldSpr, timesSpr, sakeSpr]) fadeOnly(s);
+      }
+      else if (v2 == "countdown")
+      {
+        if (countdownTGE != null) countdownTGE.alpha = 1;
+        countNum--;
+        triggerCountdownStep(countNum);
+      }
+    }
+
+    if (v2 == "resetNum") lyricNum = 0;
+    if (v2 == "delete") laNum = 1;
+  }
+
+  function fadeOnly(spr:FunkinSprite):Void
+  {
+    if (spr == null) return;
+    FlxTween.tween(spr, {alpha: 0}, 0.5, {ease: FlxEase.linear});
+  }
+
+  function triggerLyricStep(n:Int):Void
+  {
+    var dad = getDad();
+    switch (n)
+    {
+      case 1:
+        areSpr = new FunkinSprite();
+        areSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        areSpr.animation.addByPrefix("are", "1are", 1, false);
+        areSpr.animation.play("are");
+        areSpr.scale.set(2, 2);
+        areSpr.updateHitbox();
+        areSpr.setPosition(570, 500);
+        areSpr.alpha = 0;
+        areSpr.antialiasing = false;
+        areSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(areSpr, LYRIC_Z);
+        FlxTween.tween(areSpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+
+      case 2:
+        final ax:Float = areSpr != null ? areSpr.x : 570;
+        final ay:Float = areSpr != null ? areSpr.y : 500;
+
+        youSpr = new FunkinSprite();
+        youSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        youSpr.animation.addByPrefix("you", "2you", 1, false);
+        youSpr.animation.play("you");
+        youSpr.scale.set(2, 2);
+        youSpr.updateHitbox();
+        youSpr.setPosition(ax + 100, ay + 75);
+        youSpr.alpha = 0;
+        youSpr.antialiasing = false;
+        youSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(youSpr, LYRIC_Z);
+        FlxTween.tween(youSpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+
+      case 3:
+        final yx:Float = youSpr != null ? youSpr.x : 650;
+        final yy:Float = youSpr != null ? youSpr.y : 575;
+
+        readySpr = new FunkinSprite();
+        readySpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        readySpr.animation.addByPrefix("ready", "3ready", 1, false);
+        readySpr.animation.play("ready");
+        readySpr.scale.set(2, 2);
+        readySpr.updateHitbox();
+        readySpr.setPosition(yx + 30, yy + 100);
+        readySpr.alpha = 0;
+        readySpr.antialiasing = false;
+        readySpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(readySpr, LYRIC_Z);
+        FlxTween.tween(readySpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+
+      case 4:
+        for (s in [areSpr, youSpr, readySpr])
+        {
+          if (s != null) FlxTween.tween(s, {alpha: 0}, 0.5, {ease: FlxEase.linear, onComplete: function(t:FlxTween) { s.destroy(); }});
+        }
+
+      case 5:
+        maziSpr = new FunkinSprite();
+        maziSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        maziSpr.animation.addByPrefix("seriously", "1seriously", 1, false);
+        maziSpr.animation.play("seriously");
+        maziSpr.scale.set(2, 2);
+        maziSpr.updateHitbox();
+        maziSpr.setPosition(350, 500);
+        maziSpr.antialiasing = false;
+        maziSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(maziSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(maziSpr, {y: 280}, 0.5, {ease: FlxEase.quadOut});
+
+      case 6:
+        dreadSpr = new FunkinSprite();
+        dreadSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        dreadSpr.animation.addByPrefix("dreading", "2dreading", 1, false);
+        dreadSpr.animation.play("dreading");
+        dreadSpr.scale.set(2, 2);
+        dreadSpr.updateHitbox();
+        dreadSpr.setPosition(360, 500);
+        dreadSpr.antialiasing = false;
+        dreadSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(dreadSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(dreadSpr, {y: 350}, 0.5, {ease: FlxEase.quadOut});
+
+      case 7:
+        for (s in [maziSpr, dreadSpr])
+        {
+          if (s != null) FlxTween.tween(s, {alpha: 0}, 0.5, {ease: FlxEase.linear, onComplete: function(t:FlxTween) { s.destroy(); }});
+        }
+
+        itsSpr = new FunkinSprite();
+        itsSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        itsSpr.animation.addByPrefix("1", "1itsawaste", 1, false);
+        itsSpr.animation.addByPrefix("2", "2itsawaste", 1, false);
+        itsSpr.animation.addByPrefix("3", "3itsawaste", 1, false);
+        itsSpr.animation.play("1", true);
+        itsSpr.scale.set(2, 2);
+        itsSpr.updateHitbox();
+        itsSpr.setPosition(210, 700);
+        itsSpr.antialiasing = false;
+        itsSpr.scrollFactor.set(1, 1);
+        spawnLyric(itsSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(itsSpr, {x: 550}, 0.5, {ease: FlxEase.quadOut});
+
+      case 8: itsSpr?.animation.play("2", true);
+      case 9: itsSpr?.animation.play("3", true);
+      case 10: if (itsSpr != null) FlxTween.tween(itsSpr, {alpha: 0}, 0.5, {ease: FlxEase.linear, onComplete: function(t:FlxTween) { itsSpr.destroy(); }});
+
+      case 11:
+        beSpr = new FunkinSprite();
+        beSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        beSpr.animation.addByPrefix("be", "1be", 1, false);
+        beSpr.animation.play("be");
+        beSpr.scale.set(2, 2);
+        beSpr.updateHitbox();
+        beSpr.setPosition(590, 480);
+        beSpr.alpha = 0;
+        beSpr.antialiasing = false;
+        beSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(beSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(beSpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+        tweenAlpha(ps.camHUD, 0, 0.25, "quadOut");
+
+      case 12:
+        final bx:Float = beSpr != null ? beSpr.x : 590;
+        final by:Float = beSpr != null ? beSpr.y : 240;
+        notSpr = new FunkinSprite();
+        notSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        notSpr.animation.addByPrefix("not", "2not", 1, false);
+        notSpr.animation.play("not");
+        notSpr.scale.set(2, 2);
+        notSpr.updateHitbox();
+        notSpr.setPosition(bx + 80, by);
+        notSpr.alpha = 0;
+        notSpr.antialiasing = false;
+        notSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(notSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(notSpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+
+      case 13:
+        final nx:Float = notSpr != null ? notSpr.x : 470;
+        final ny:Float = notSpr != null ? notSpr.y : 480;
+        afraidSpr = new FunkinSprite();
+        afraidSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        afraidSpr.animation.addByPrefix("afraid", "3afraid", 1, false);
+        afraidSpr.animation.play("afraid");
+        afraidSpr.scale.set(2, 2);
+        afraidSpr.updateHitbox();
+        afraidSpr.setPosition(nx - 420, ny + 75);
+        afraidSpr.alpha = 0;
+        afraidSpr.antialiasing = false;
+        afraidSpr.scrollFactor.set(0.6, 0.6);
+        spawnLyric(afraidSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(afraidSpr, {alpha: 1}, 0.5, {ease: FlxEase.quadOut});
+
+      case 14:
+        for (s in [beSpr, notSpr, afraidSpr])
+        {
+          if (s != null) FlxTween.tween(s, {alpha: 0}, 0.5, {ease: FlxEase.linear, onComplete: function(t:FlxTween) { s.destroy(); }});
+        }
+
+      case 15:
+        its2Spr = new FunkinSprite();
+        its2Spr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        its2Spr.animation.addByPrefix("its", "1its0", 1, false);
+        its2Spr.animation.play("its");
+        its2Spr.scale.set(2, 2);
+        its2Spr.updateHitbox();
+        its2Spr.setPosition(-10, 630);
+        its2Spr.antialiasing = false;
+        spawnLyric(its2Spr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(its2Spr, {x: dad.x + 420}, 0.75, {ease: FlxEase.quadOut});
+
+      case 16:
+        allSpr = new FunkinSprite();
+        allSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        allSpr.animation.addByPrefix("all", "2all", 0.5, false);
+        allSpr.animation.play("all");
+        allSpr.scale.set(2, 2);
+        allSpr.updateHitbox();
+        allSpr.setPosition(990, 700);
+        allSpr.antialiasing = false;
+        spawnLyric(allSpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(allSpr, {x: dad.x + 300}, 0.75, {ease: FlxEase.quadOut});
+
+      case 17:
+        okaySpr = new FunkinSprite();
+        okaySpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        okaySpr.animation.addByPrefix("okay", "3okay", 1, false);
+        okaySpr.animation.play("okay");
+        okaySpr.scale.set(2, 2);
+        okaySpr.updateHitbox();
+        okaySpr.setPosition(dad.x + 350, 1100);
+        okaySpr.antialiasing = false;
+        spawnLyric(okaySpr, LYRIC_Z);
+        ps.currentStage.refresh();
+        FlxTween.tween(okaySpr, {y: 780}, 0.75, {ease: FlxEase.quadOut});
+
+      case 18:
+        for (s in [its2Spr, allSpr, okaySpr])
+        {
+          if (s != null) FlxTween.tween(s, {alpha: 0}, 0.5, {ease: FlxEase.linear, onComplete: function(t:FlxTween) { s.destroy(); }});
+        }
+        letsSpr = new FunkinSprite();
+        letsSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        letsSpr.animation.addByPrefix("lets", "1lets", 1, false);
+        letsSpr.animation.play("lets");
+        letsSpr.scale.set(2, 2);
+        letsSpr.updateHitbox();
+        letsSpr.setPosition(390, 0);
+        letsSpr.scrollFactor.set(0, 0);
+        letsSpr.antialiasing = false;
+        hudAdd(letsSpr, ps.camCutscene, 3200);
+        FlxTween.tween(letsSpr, {y: 100}, 0.5, {ease: FlxEase.quadOut});
+
+      case 19:
+        final lx:Float = letsSpr != null ? letsSpr.x : 390;
+        playSpr = new FunkinSprite();
+        playSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        playSpr.animation.addByPrefix("play", "2play", 1, false);
+        playSpr.animation.play("play");
+        playSpr.scale.set(2, 2);
+        playSpr.updateHitbox();
+        playSpr.setPosition(lx + 100, 0);
+        playSpr.scrollFactor.set(0, 0);
+        playSpr.antialiasing = false;
+        hudAdd(playSpr, ps.camCutscene, 3200);
+        FlxTween.tween(playSpr, {y: 95}, 0.5, {ease: FlxEase.quadOut});
+
+      case 20:
+        final px:Float = playSpr != null ? playSpr.x : 490;
+        aSpr = new FunkinSprite();
+        aSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        aSpr.animation.addByPrefix("a", "3a0", 1, false);
+        aSpr.animation.play("a");
+        aSpr.scale.set(2, 2);
+        aSpr.updateHitbox();
+        aSpr.setPosition(px + 120, 0);
+        aSpr.scrollFactor.set(0, 0);
+        aSpr.antialiasing = false;
+        hudAdd(aSpr, ps.camCutscene, 3200);
+        FlxTween.tween(aSpr, {y: 100}, 0.5, {ease: FlxEase.quadOut});
+
+      case 21:
+        final ax2:Float = aSpr != null ? aSpr.x : 610;
+        gameSpr = new FunkinSprite();
+        gameSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        gameSpr.animation.addByPrefix("1game", "4game", 1, false);
+        gameSpr.animation.play("1game");
+        gameSpr.scale.set(2, 2);
+        gameSpr.updateHitbox();
+        gameSpr.setPosition(ax2 + 80, 0);
+        gameSpr.scrollFactor.set(0, 0);
+        gameSpr.antialiasing = false;
+        hudAdd(gameSpr, ps.camCutscene, 3200);
+        FlxTween.tween(gameSpr, {y: 80}, 0.5, {ease: FlxEase.quadOut});
+
+      case 22:
+        fForSpr = new FunkinSprite();
+        fForSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        fForSpr.animation.addByPrefix("1for", "1for", 1, false);
+        fForSpr.animation.play("1for");
+        fForSpr.scale.set(2, 2);
+        fForSpr.updateHitbox();
+        fForSpr.setPosition(325, 720);
+        fForSpr.scrollFactor.set(0, 0);
+        fForSpr.antialiasing = false;
+        hudAdd(fForSpr, ps.camCutscene, 3200);
+        FlxTween.tween(fForSpr, {y: 500}, 0.5, {ease: FlxEase.quadOut});
+
+      case 23:
+        final fx:Float = fForSpr != null ? fForSpr.x : 325;
+        oldSpr = new FunkinSprite();
+        oldSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        oldSpr.animation.addByPrefix("old", "2old", 1, false);
+        oldSpr.animation.play("old");
+        oldSpr.scale.set(2, 2);
+        oldSpr.updateHitbox();
+        oldSpr.setPosition(fx + 120, 720);
+        oldSpr.scrollFactor.set(0, 0);
+        oldSpr.antialiasing = false;
+        hudAdd(oldSpr, ps.camCutscene, 3200);
+        FlxTween.tween(oldSpr, {y: 520}, 0.5, {ease: FlxEase.quadOut});
+
+      case 24:
+        final ox:Float = oldSpr != null ? oldSpr.x : 445;
+        timesSpr = new FunkinSprite();
+        timesSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        timesSpr.animation.addByPrefix("times", "3times", 1, false);
+        timesSpr.animation.play("times");
+        timesSpr.scale.set(2, 2);
+        timesSpr.updateHitbox();
+        timesSpr.setPosition(ox + 130, 720);
+        timesSpr.scrollFactor.set(0, 0);
+        timesSpr.antialiasing = false;
+        hudAdd(timesSpr, ps.camCutscene, 3200);
+        FlxTween.tween(timesSpr, {y: 490}, 0.5, {ease: FlxEase.quadOut});
+
+      case 25:
+        final tx:Float = timesSpr != null ? timesSpr.x : 575;
+        sakeSpr = new FunkinSprite();
+        sakeSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        sakeSpr.animation.addByPrefix("sake", "4sake", 1, false);
+        sakeSpr.animation.play("sake");
+        sakeSpr.scale.set(2, 2);
+        sakeSpr.updateHitbox();
+        sakeSpr.setPosition(tx + 150, 720);
+        sakeSpr.scrollFactor.set(0, 0);
+        sakeSpr.antialiasing = false;
+        hudAdd(sakeSpr, ps.camCutscene, 3200);
+        FlxTween.tween(sakeSpr, {y: 510}, 0.5, {ease: FlxEase.quadOut});
+
+      case 26:
+        for (s in [letsSpr, playSpr, aSpr, gameSpr, fForSpr, oldSpr, timesSpr, sakeSpr])
+        {
+          if (s != null) s.destroy();
+        }
+        ps.camHUD.alpha = 1;
+
+      case 27:
+        youareSpr = new FunkinSprite();
+        youareSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        youareSpr.animation.addByPrefix("you", "1you2", 1, false);
+        youareSpr.animation.addByPrefix("are", "2are2", 1, false);
+        youareSpr.animation.addByPrefix("flawed", "3flawed", 1, false);
+        youareSpr.animation.play("you", true);
+        youareSpr.scale.set(2, 2);
+        youareSpr.updateHitbox();
+        youareSpr.setPosition(140, 720);
+        youareSpr.antialiasing = false;
+        spawnLyric(youareSpr, LYRIC_Z);
+
+      case 28: youareSpr?.animation.play("are", true);
+      case 29: youareSpr?.animation.play("flawed", true);
+      case 30:
+        youareSpr?.destroy();
+        iamgSpr = new FunkinSprite();
+        iamgSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        iamgSpr.animation.addByPrefix("i", "1i0", 1, false);
+        iamgSpr.animation.addByPrefix("am", "2am0", 1, false);
+        iamgSpr.animation.addByPrefix("god", "3god0", 1, false);
+        iamgSpr.animation.play("i", true);
+        iamgSpr.scale.set(2, 2);
+        iamgSpr.updateHitbox();
+        iamgSpr.setPosition(640, 720);
+        iamgSpr.antialiasing = false;
+        spawnLyric(iamgSpr, LYRIC_Z);
+
+      case 31: iamgSpr?.animation.play("am", true);
+      case 32: iamgSpr?.animation.play("god", true);
+      case 33: iamgSpr?.destroy();
+
+      case 34:
+        FlxTween.tween(blueSpr, {alpha: 0}, 0.3, {ease: FlxEase.quadIn});
+        iamsSpr = new FunkinSprite();
+        iamsSpr.frames = Paths.getSparrowAtlas("tgeBG/tgeLyrics");
+        iamsSpr.animation.addByPrefix("i", "1i20", 1, false);
+        iamsSpr.animation.addByPrefix("am", "2am20", 1, false);
+        iamsSpr.animation.addByPrefix("sonic", "3sonic0", 1, false);
+        iamsSpr.animation.addByPrefix("sawnick", "4sonicFucked0", 1, false);
+        iamsSpr.animation.play("i", true);
+        iamsSpr.scale.set(3, 3);
+        iamsSpr.updateHitbox();
+        iamsSpr.setPosition(315, 100);
+        iamsSpr.antialiasing = false;
+        iamsSpr.scrollFactor.set(0, 0);
+        hudAdd(iamsSpr, ps.camCutscene, 3250);
+
+      case 35: iamsSpr?.animation.play("am", true);
+      case 36: iamsSpr?.animation.play("sonic", true);
+      case 37: iamsSpr?.animation.play("sawnick", true);
+      case 38: iamsSpr?.destroy();
+      default:
+    }
+  }
+
+  function triggerCountdownStep(c:Int):Void
+  {
+    if (countdownTGE == null) return;
+    switch (c)
+    {
+      case 3: countdownTGE.animation.play("three", true);
+      case 2: countdownTGE.animation.play("two", true);
+      case 1: countdownTGE.animation.play("one", true);
+      case 0: countdownTGE.animation.play("go", true);
+      case -1: countdownTGE.alpha = 0.001;
+      default:
+    }
+  }
+
+  var lastSecFade:Int = -1;
+
+  function updateBfFade():Void
+  {
+    final bf:BaseCharacter = getBoyfriend();
+    if (bf == null || stepI < 0 || stepI >= 646) return;
+
+    final sec:Int = Std.int(stepI / 16);
+    if (sec == lastSecFade) return;
+    lastSecFade = sec;
+
+    bf.visible = true;
+    tweenAlpha(bf, 1, 0.5, "quadInOut");
+  }
+
+  override function onPause() {
+        super.onPause();
+        FlxTween.globalManager.forEach((tween:FlxTween) -> tween.active = false);
+        FlxTimer.globalManager.forEach((timer:FlxTimer) -> timer.active = false);
+    }
+
+    override function onResume() {
+        super.onResume();
+        FlxTween.globalManager.forEach((tween:FlxTween) -> tween.active = true);
+        FlxTimer.globalManager.forEach((timer:FlxTimer) -> timer.active = true);
+    }
+}

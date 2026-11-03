@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "name": "Majin",
+  "renderType": "sparrow",
+  "assetPath": "characters/Majin",
+  "singTime": 3.0,
+  "scale": 3.1,
+  "flipX": false,
+  "healthIcon": {
+    "id": "majin",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [-276, -335],
+      "frameRate": 30,
+      "looped": true
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "singLEFT",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "singDOWN",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singUP",
+      "prefix": "singUP",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "singRIGHT",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "fun",
+      "prefix": "fun",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    }
+  ]
+}

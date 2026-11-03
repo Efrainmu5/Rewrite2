@@ -1,0 +1,151 @@
+{
+	"version": "1.0.0",
+	"renderType": "sparrow",
+	"danceEvery": 1,
+	"offsets": [
+		0,
+		0
+	],
+	"applyStageMatrix": false,
+	"scale": 3,
+	"name": "LordXInternal",
+	"cameraOffsets": [
+		0,
+		0
+	],
+	"flipX": false,
+	"isPixel": false,
+	"startingAnimation": "idle",
+	"singTime": 6.1,
+	"healthIcon": {
+		"isPixel": false,
+		"offsets": [
+			0,
+			0
+		],
+		"shouldBop": true,
+		"scale": 1,
+		"id": "face",
+		"flipX": false
+	},
+	"assetPath": "characters/LordXInternal",
+	"atlasSettings": {
+		"applyStageMatrix": false,
+		"useRenderTexture": false,
+		"filterQuality": 1,
+		"cacheOnLoad": false,
+		"swfMode": true
+	},
+	"animations": [
+		{
+			"offsets": [
+				0,
+				0
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "idle",
+			"animType": "framelabel",
+			"name": "idle",
+			"looped": true,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				8,
+				49
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "left",
+			"animType": "framelabel",
+			"name": "singLEFT",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				12,
+				-5
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "down",
+			"animType": "framelabel",
+			"name": "singDOWN",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				39,
+				58
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "up",
+			"animType": "framelabel",
+			"name": "singUP",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				14,
+				24
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "right",
+			"animType": "framelabel",
+			"name": "singRIGHT",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-10,
+				-7
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "appear",
+			"animType": "framelabel",
+			"name": "appear",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				61,
+				66
+			],
+			"flipY": false,
+			"frameRate": 24,
+			"prefix": "glitch",
+			"animType": "framelabel",
+			"name": "glitch",
+			"looped": true,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				60,
+				70
+			],
+			"prefix": "glitch",
+			"animType": "framelabel",
+			"name": "glitchLoop",
+			"looped": true,
+			"flipX": false,
+			"flipY": false,
+			"frameRate": 24,
+			"indices": [
+				1,
+				1,
+				1,
+				1
+			]
+		}
+	]
+}

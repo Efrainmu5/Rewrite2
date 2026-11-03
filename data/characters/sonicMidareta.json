@@ -1,0 +1,145 @@
+{
+	"version": "1.0.0",
+	"renderType": "sparrow",
+	"offsets": [
+		0,
+		0
+	],
+	"danceEvery": 1,
+	"applyStageMatrix": false,
+	"scale": 3,
+	"name": "sonicMidareta",
+	"flipX": false,
+	"cameraOffsets": [
+		0,
+		0
+	],
+	"singTime": 2.7,
+	"startingAnimation": "idle",
+	"isPixel": false,
+	"healthIcon": {
+		"isPixel": false,
+		"offsets": [
+			0,
+			0
+		],
+		"shouldBop": true,
+		"scale": 1,
+		"id": "sonic-icon",
+		"flipX": false
+	},
+	"assetPath": "characters/sonicMidareta",
+	"atlasSettings": {
+		"applyStageMatrix": false,
+		"useRenderTexture": false,
+		"filterQuality": 1,
+		"cacheOnLoad": false,
+		"swfMode": true
+	},
+	"animations": [
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "down",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "singDOWN"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "left",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "singLEFT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "right",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "singRIGHT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "up",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "singUP"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "idleHead",
+			"animType": "framelabel", 
+			"flipX": false,
+			"looped": true,
+			"name": "idleHead"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				54,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "idle0",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": true,
+			"name": "idle"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "transition",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "transition"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				50,
+				49
+			],
+			"frameRate": 30,
+			"prefix": "laugh",
+			"animType": "framelabel",
+			"flipX": false,
+			"looped": false,
+			"name": "laugh"
+		}
+	]
+}

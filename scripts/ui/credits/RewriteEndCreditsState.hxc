@@ -1,0 +1,643 @@
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+import flixel.util.FlxSave;
+import flixel.util.FlxTimer;
+import funkin.Paths;
+import funkin.PlayerSettings;
+import funkin.audio.FunkinSound;
+import funkin.ui.MusicBeatState;
+import funkin.ui.ScriptedMusicBeatState;
+import haxe.Exception;
+import openfl.display.BlendMode;
+import flixel.text.FlxTextFormat;
+import flixel.text.FlxTextFormatMarkerPair;
+
+class RewriteEndCreditsState extends MusicBeatState
+{
+    public function new()
+    {
+        super();
+    }
+
+    // ======================================================================
+    //  BLOQUE COMUN (mismo estilo que RewriteMainMenuState)
+    // ======================================================================
+    var DW:Float = 820.0;
+    var DH:Float = 720.0;
+    var offsetX:Float = 0.0;
+    var offsetY:Float = 0.0;
+
+    var px:Float = -9999.0;
+    var py:Float = -9999.0;
+    var tap:Bool = false;
+    var tapHeld:Bool = false;
+
+    function initLayout():Void
+    {
+        offsetX = (FlxG.width - DW) / 2;
+        offsetY = (FlxG.height - DH) / 2;
+        FlxG.camera.bgColor = 0xFF000000;
+    }
+
+    function put(o:Dynamic):Dynamic
+    {
+        add(o);
+        return o;
+    }
+
+    // equivalente a screenCenter() dentro del canvas de 820x720
+    function ctr(s:FlxSprite, axis:Int):Void
+    {
+        if (axis != 0x10) s.x = offsetX + (DW - s.width) / 2;
+        if (axis != 0x01) s.y = offsetY + (DH - s.height) / 2;
+    }
+
+    function mkText(x:Float, y:Float, w:Float, str:String, size:Int, color:Int, align:String, font:String):FlxText
+    {
+        final t:FlxText = new FlxText(offsetX + x, offsetY + y, w, str);
+        t.setFormat(Paths.font(font), size, color, align, FlxTextBorderStyle.SHADOW, 0xFF000000);
+        t.shadowOffset.x += 1;
+        t.shadowOffset.y += 3;
+        return t;
+    }
+
+    function mkBlueFade():FlxSprite
+    {
+        final f:FlxSprite = new FlxSprite(offsetX, offsetY).makeGraphic(Std.int(DW), Std.int(DH), 0xFF0000FF);
+        f.blend = BlendMode.MULTIPLY;
+        f.alpha = 0.001;
+        put(f);
+        return f;
+    }
+
+    function ctl():Dynamic
+    {
+        return PlayerSettings.player1.controls;
+    }
+
+    function isMobile():Bool
+    {
+        try
+        {
+            return FlxG.onMobile == true;
+        }
+        catch (e:Exception) {}
+        return false;
+    }
+
+    // raton (PC) + pantalla tactil (movil) en un solo puntero.
+    // Las coordenadas son del mundo de la camara, asi que cuadran con x/y de los sprites.
+    function readPointer():Void
+    {
+        tap = false;
+        tapHeld = false;
+
+        try
+        {
+            final p = FlxG.mouse.getWorldPosition(FlxG.camera);
+            px = p.x;
+            py = p.y;
+            p.put();
+        }
+        catch (e:Exception)
+        {
+            px = FlxG.mouse.screenX;
+            py = FlxG.mouse.screenY;
+        }
+        tap = FlxG.mouse.justPressed;
+        tapHeld = FlxG.mouse.pressed;
+
+        try
+        {
+            for (t in FlxG.touches.list)
+            {
+                final tp = t.getWorldPosition(FlxG.camera);
+                if (t.justPressed)
+                {
+                    px = tp.x;
+                    py = tp.y;
+                    tap = true;
+                }
+                if (t.pressed) tapHeld = true;
+                tp.put();
+            }
+        }
+        catch (e2:Exception) {}
+    }
+
+    // trim propio (StringTools no esta disponible dentro de los scripts)
+    function trimStr(s:String):String
+    {
+        var a:Int = 0;
+        var b:Int = s.length;
+        while (a < b && (s.charAt(a) == " " || s.charAt(a) == "\r" || s.charAt(a) == "\n" || s.charAt(a) == "\t")) a++;
+        while (b > a && (s.charAt(b - 1) == " " || s.charAt(b - 1) == "\r" || s.charAt(b - 1) == "\n" || s.charAt(b - 1) == "\t")) b--;
+        return s.substr(a, b - a);
+    }
+
+    function over(s:FlxSprite):Bool
+    {
+        return s != null && px >= s.x && px <= s.x + s.width && py >= s.y && py <= s.y + s.height;
+    }
+
+    function go(name:String):Bool
+    {
+        final s = ScriptedMusicBeatState.init(name);
+        if (s == null)
+        {
+            trace("[Rewrite] No se pudo cargar: " + name);
+            return false;
+        }
+        FlxG.switchState(s);
+        return true;
+    }
+
+    // ---- guardados ----
+    function prefsObj():FlxSave
+    {
+        final s:FlxSave = new FlxSave();
+        s.bind("rewrite_mod", "rewrite");
+        return s;
+    }
+
+    function pget(key:String, def:Dynamic):Dynamic
+    {
+        var v:Dynamic = prefsObj().data[key];
+        return v == null ? def : v;
+    }
+
+    function pset(key:String, val:Dynamic):Void
+    {
+        final s = prefsObj();
+        s.data[key] = val;
+        s.flush();
+    }
+
+    function sget(key:String, def:Dynamic):Dynamic
+    {
+        final s = new FlxSave();
+        s.bind("rewrite_session", "rewrite");
+        var v:Dynamic = s.data[key];
+        return v == null ? def : v;
+    }
+
+    function sset(key:String, val:Dynamic):Void
+    {
+        final s = new FlxSave();
+        s.bind("rewrite_session", "rewrite");
+        s.data[key] = val;
+    }
+
+    function flashingOn():Bool
+    {
+        final v:Dynamic = pget("flashing", null);
+        if (v != null) return v == true;
+        try
+        {
+            final cls = Type.resolveClass("funkin.Preferences");
+            if (cls != null)
+            {
+                final n:Dynamic = Reflect.getProperty(cls, "flashingLights");
+                if (n != null) return n == true;
+            }
+        }
+        catch (e:Exception) {}
+        return true;
+    }
+
+    // reproduce una musica (nombre de V-Slice) y si no suena, prueba la ruta plana
+    function playMenuMusic(name:String, vol:Float, loop:Bool):Void
+    {
+        try
+        {
+            FunkinSound.playMusic(name, {
+                startingVolume: vol,
+                overrideExisting: true,
+                restartTrack: true,
+                loop: loop,
+                volume: vol,
+                persist: true,
+                restart: true
+            });
+        }
+        catch (e:Exception) {}
+
+        if (FlxG.sound.music == null || !FlxG.sound.music.playing)
+        {
+            try { FlxG.sound.playMusic(Paths.music(name), vol, loop); }
+            catch (e2:Exception) {}
+        }
+    }
+
+    function stopMusic():Void
+    {
+        if (FlxG.sound.music != null) FlxG.sound.music.stop();
+    }
+
+    function fadeMusicTo(vol:Float, time:Float):Void
+    {
+        if (FlxG.sound.music != null) FlxTween.tween(FlxG.sound.music, {volume: vol}, time);
+    }
+
+    function overS(s:FlxSprite):Bool
+    {
+        if (s == null) return false;
+        final w:Float = s.frameWidth * Math.abs(s.scale.x);
+        final h:Float = s.frameHeight * Math.abs(s.scale.y);
+        final cx:Float = s.x + s.width / 2;
+        final cy:Float = s.y + s.height / 2;
+        return px >= cx - w / 2 && px <= cx + w / 2 && py >= cy - h / 2 && py <= cy + h / 2;
+    }
+
+    // barras negras para tapar lo que sobresale del canvas 820x720 (se llama al final)
+    function addBars():Void
+    {
+        if (offsetX > 0)
+        {
+            put(new FlxSprite(0, 0).makeGraphic(Std.int(offsetX), Std.int(FlxG.height), 0xFF000000));
+            put(new FlxSprite(FlxG.width - offsetX, 0).makeGraphic(Std.int(offsetX) + 1, Std.int(FlxG.height), 0xFF000000));
+        }
+        if (offsetY > 0)
+        {
+            put(new FlxSprite(0, 0).makeGraphic(Std.int(FlxG.width), Std.int(offsetY), 0xFF000000));
+            put(new FlxSprite(0, FlxG.height - offsetY).makeGraphic(Std.int(FlxG.width), Std.int(offsetY) + 1, 0xFF000000));
+        }
+    }
+
+    // cursor propio del mod (solo en PC)
+    var customCursor:FlxSprite = null;
+
+    function makeCursor():Void
+    {
+        try
+        {
+            customCursor = new FlxSprite(-100, -100);
+            customCursor.frames = Paths.getSparrowAtlas("cursor");
+            customCursor.animation.addByPrefix("default", "default", 24, false);
+            customCursor.animation.addByPrefix("wait", "wait", 24, false);
+            customCursor.animation.addByPrefix("hover", "hover", 24, false);
+            customCursor.animation.play("default");
+            customCursor.scale.set(1.5, 1.5);
+            customCursor.visible = !isMobile();
+            put(customCursor);
+        }
+        catch (e:Exception)
+        {
+            // sin cursor propio: se usa el del sistema
+            trace("[Rewrite] No se pudo crear el cursor: " + e);
+            customCursor = null;
+            FlxG.mouse.visible = true;
+        }
+    }
+
+    var cursorForceX:Float = -1.0;
+    var cursorForceY:Float = -1.0;
+
+    function cursorAnim(name:String):Void
+    {
+        if (customCursor == null) return;
+        if (cursorForceX >= 0)
+        {
+            customCursor.x = cursorForceX;
+            customCursor.y = cursorForceY;
+        }
+        else
+        {
+            customCursor.x = FlxG.mouse.x;
+            customCursor.y = FlxG.mouse.y;
+        }
+        try
+        {
+            if (customCursor.animation.curAnim == null || customCursor.animation.curAnim.name != name) customCursor.animation.play(name, true);
+        }
+        catch (e:Exception) {}
+    }
+
+    // ---- depuracion: F9 muestra la posicion del puntero y las zonas clickeables ----
+    var dbgOn:Bool = false;
+    var dbgText:FlxText = null;
+    var dbgTargets:Array<FlxSprite> = [];
+    var dbgBoxes:Array<FlxSprite> = [];
+
+    function dbgSet(list:Array<FlxSprite>):Void
+    {
+        dbgTargets = list;
+    }
+
+    function dbgUpdate():Void
+    {
+        if (FlxG.keys.justPressed.F9)
+        {
+            dbgOn = !dbgOn;
+            if (dbgText == null)
+            {
+                dbgText = new FlxText(offsetX + 5, offsetY + 5, 500, "");
+                dbgText.setFormat(null, 16, 0xFFFFFF00, "left", FlxTextBorderStyle.OUTLINE, 0xFF000000);
+                put(dbgText);
+            }
+            dbgText.visible = dbgOn;
+            for (bx in dbgBoxes) bx.visible = dbgOn;
+        }
+        if (!dbgOn) return;
+
+        dbgText.text = "x=" + Std.int(px) + "  y=" + Std.int(py) + "  tap=" + tap + "  held=" + tapHeld;
+
+        while (dbgBoxes.length < dbgTargets.length)
+        {
+            final nb:FlxSprite = new FlxSprite(0, 0).makeGraphic(1, 1, 0x66FF0000);
+            put(nb);
+            dbgBoxes.push(nb);
+        }
+
+        for (i in 0...dbgTargets.length)
+        {
+            final s:FlxSprite = dbgTargets[i];
+            final bx:FlxSprite = dbgBoxes[i];
+            if (s == null)
+            {
+                bx.visible = false;
+                continue;
+            }
+            bx.visible = true;
+            bx.setGraphicSize(Std.int(Math.max(1, s.width)), Std.int(Math.max(1, s.height)));
+            bx.updateHitbox();
+            bx.setPosition(s.x, s.y);
+        }
+    }
+    var creditsString:String = "\n\n         \nSpringless    JasperCat\n     \nSnowTheFox    DaPootisBird\n            \nLandyRS       DylanZeMuffin\nSturm       ahlyess\n          \ndRev    TheTrueSammu    [A2]\nCottonTheIdiot    Cr00L\n              \n$Luigikid Gaming$    %Penkaru%\n#Kwite#    !Duncachi!\n&CommandoDev&    ^JoeDoughBoi^    /Joel/ >G>\n~AnarackWarriors~    *scrumbo_*    -FunkyBunny-\n";
+
+    var sonicAnimation:FlxSprite = null;
+    var creditsText:FlxText = null;
+    var modName:FlxSprite = null;
+    var directorsText:FlxSprite = null;
+    var codersText:FlxSprite = null;
+
+    var voiceActorsText:FlxSprite = null;
+    var majinIcon:FlxSprite = null;
+    var xIcon:FlxSprite = null;
+    var rodentrapIcon:FlxSprite = null;
+    var lordXIcon:FlxSprite = null;
+
+    var playtestersText:FlxSprite = null;
+    var specialThanksText:FlxSprite = null;
+    var youreTooCool:FlxSprite = null;
+    var sparkles:FlxSprite = null;
+    var debug:Bool = false;
+    var legacySplashScreen:FlxSprite = null;
+    var pressSpace:FlxSprite = null;
+    var canSkip:Bool = true;
+    var skipPrompt:FlxSprite = null;
+    var inLegacySplash:Bool = false;
+    var leaving:Bool = false;
+    var replay:Bool = false;
+
+    override function create():Void
+    {
+        super.create();
+        initLayout();
+        FlxG.mouse.visible = false;
+
+        replay = sget("dataSelect", false) == true;
+
+        playMenuMusic("youreTooCool", 1.0, false);
+        if (FlxG.sound.music != null) FlxG.sound.music.looped = false;
+
+        sonicAnimation = new FlxSprite();
+        sonicAnimation.frames = Paths.getSparrowAtlas("menus/endCredits/animation");
+        sonicAnimation.animation.addByPrefix("intro", "intro", 15, false);
+        sonicAnimation.animation.addByPrefix("loop", "loop", 8, true);
+        sonicAnimation.animation.play("intro");
+        ctr(sonicAnimation, 0x11);
+        sonicAnimation.scale.set(3.3, 3.3);
+        put(sonicAnimation);
+
+        sonicAnimation.animation.finishCallback = function(fin:String) {
+            sonicAnimation.animation.finishCallback = null;
+            sonicAnimation.animation.play("loop", true);
+        };
+
+        modName = new FlxSprite(0, offsetY + 750).loadGraphic(Paths.image("menus/endCredits/modName"));
+        modName.scale.set(1.45, 1.45);
+        modName.updateHitbox();
+        ctr(modName, 0x01);
+        put(modName);
+
+        directorsText = new FlxSprite(0, offsetY + 835).loadGraphic(Paths.image("menus/endCredits/directors"));
+        codersText = new FlxSprite(0, offsetY + 970).loadGraphic(Paths.image("menus/endCredits/coders"));
+
+        voiceActorsText = new FlxSprite(0, offsetY + 1095).loadGraphic(Paths.image("menus/endCredits/voiceActors"));
+        majinIcon = new FlxSprite(0, offsetY + 1185).loadGraphic(Paths.image("menus/endCredits/vaIcons/majin"));
+        xIcon = new FlxSprite(0, offsetY + 1135).loadGraphic(Paths.image("menus/endCredits/vaIcons/2011x"));
+        rodentrapIcon = new FlxSprite(0, offsetY + 1135).loadGraphic(Paths.image("menus/endCredits/vaIcons/rodentrap"));
+        lordXIcon = new FlxSprite(0, offsetY + 1195).loadGraphic(Paths.image("menus/endCredits/vaIcons/lordX"));
+
+        playtestersText = new FlxSprite(0, offsetY + 1285).loadGraphic(Paths.image("menus/endCredits/playtesters"));
+        specialThanksText = new FlxSprite(0, offsetY + 1465).loadGraphic(Paths.image("menus/endCredits/specialThanks"));
+
+        youreTooCool = new FlxSprite().loadGraphic(Paths.image("menus/endCredits/youreTooCool"));
+        ctr(youreTooCool, 0x11);
+        youreTooCool.scale.set(3, 3);
+        youreTooCool.alpha = 0.001;
+        put(youreTooCool);
+
+        sparkles = new FlxSprite();
+        sparkles.frames = Paths.getSparrowAtlas("menus/title/sparkles");
+        sparkles.animation.addByPrefix("sparkles", "sparkles", 30, true);
+        ctr(sparkles, 0x11);
+        sparkles.alpha = 0.001;
+        put(sparkles);
+
+        for (i in [sonicAnimation, modName, youreTooCool, sparkles, majinIcon, xIcon, rodentrapIcon, lordXIcon]) i.antialiasing = false;
+
+        for (i in [directorsText, codersText, voiceActorsText, majinIcon, xIcon, rodentrapIcon, lordXIcon, playtestersText, specialThanksText])
+        {
+            i.scale.set(1.75, 1.75);
+            i.updateHitbox();
+            ctr(i, 0x01);
+            put(i);
+        }
+
+        majinIcon.x = offsetX + 580;
+        xIcon.x = offsetX + 670;
+        rodentrapIcon.x = offsetX + 300;
+        lordXIcon.x = offsetX + 350;
+
+        creditsText = new FlxText(offsetX, offsetY + 650, DW, creditsString);
+        creditsText.setFormat(Paths.font("sonic2HUD.ttf"), 40, 0xFFFFFFFF, "center", FlxTextBorderStyle.OUTLINE, 0xFF000000, false);
+        creditsText.borderSize = 2;
+        put(creditsText);
+
+        legacySplashScreen = new FlxSprite();
+        legacySplashScreen.frames = Paths.getSparrowAtlas("menus/endCredits/extrasSplashScreen");
+        legacySplashScreen.animation.addByPrefix("loop", "loop", 12, true);
+        legacySplashScreen.animation.play("loop");
+        ctr(legacySplashScreen, 0x11);
+        legacySplashScreen.scale.set(3.25, 3.25);
+        legacySplashScreen.alpha = 0.001;
+        put(legacySplashScreen);
+
+        pressSpace = new FlxSprite().loadGraphic(Paths.image("pressSpace"));
+        ctr(pressSpace, 0x11);
+        pressSpace.visible = false;
+        pressSpace.scale.set(3.2, 3.2);
+        pressSpace.y = offsetY + 300;
+        pressSpace.alpha = 0.001;
+        put(pressSpace);
+
+        if (pget("seenCreditsRoll", false) == true)
+        {
+            skipPrompt = new FlxSprite(offsetX + 660, offsetY + 660).loadGraphic(Paths.image("menus/endCredits/skipCreditsRoll"));
+            skipPrompt.scale.set(1.35, 1.35);
+            skipPrompt.alpha = 0.001;
+            put(skipPrompt);
+
+            FlxTween.tween(skipPrompt, {alpha: 1}, 0.5);
+        }
+
+        addBars();
+
+        final luigikidFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFF00FC00), "$");
+        final kwiteFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFF20B420), "#");
+        final duncachiFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFF6BA0DE), "!");
+        final penkaruFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF84868), "%");
+        final joeDoughBoiFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFB00020), "^");
+        final commandoDevFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFA012E8), "&");
+        final scrumboFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFDDE26D), "*");
+        final anarackWarriorsFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF80000), "~");
+        final joelGFormatYellow = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFF8B400), "/");
+        final joelGFormatBlue = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFF105AE8), ">");
+        final funkyBunnyFormat = new FlxTextFormatMarkerPair(new FlxTextFormat(0xFFD15E27), "-");
+
+        creditsText.applyMarkup(creditsString, [luigikidFormat, kwiteFormat, duncachiFormat,
+            penkaruFormat, joeDoughBoiFormat, commandoDevFormat, scrumboFormat, anarackWarriorsFormat, joelGFormatYellow, joelGFormatBlue, funkyBunnyFormat]);
+
+        new FlxTimer().start(3.24, function(t1:FlxTimer) {
+            for (i in [modName, creditsText, directorsText, codersText, voiceActorsText, majinIcon, xIcon, rodentrapIcon, lordXIcon, playtestersText, specialThanksText])
+            {
+                FlxTween.tween(i, {y: i.y - 1690}, 62.46);
+            }
+
+            if (skipPrompt != null) FlxTween.tween(skipPrompt, {alpha: 0.001}, 0.5);
+        });
+
+        new FlxTimer().start(4.36, function(t2:FlxTimer) {
+            if (flashingOn()) FlxG.camera.flash(0xFFFFFFFF, 1);
+            FlxTween.tween(sonicAnimation, {alpha: 0.5}, flashingOn() ? 0.000001 : 1);
+        });
+
+        new FlxTimer().start(65.46, function(t3:FlxTimer) {
+            canSkip = false;
+            FlxTween.tween(sonicAnimation, {alpha: 0}, 0.75);
+        });
+
+        new FlxTimer().start(66.6, function(t4:FlxTimer) {
+            tooCoolFlash();
+        });
+
+        new FlxTimer().start(73.702, function(t5:FlxTimer) {
+            tooCoolFinish();
+        });
+    }
+
+    function tooCoolFlash():Void
+    {
+        sonicAnimation.visible = false;
+        if (skipPrompt != null) skipPrompt.visible = false;
+        if (flashingOn()) FlxG.camera.flash(0xFFE8EA10, 1);
+        canSkip = false;
+        youreTooCool.alpha = 1;
+        sparkles.alpha = 1;
+        sparkles.animation.play("sparkles");
+
+        new FlxTimer().start(2.6, function(t6:FlxTimer) {
+            sparkles.alpha = 0.001;
+        });
+
+        new FlxTimer().start(7, function(t7:FlxTimer) {
+            tooCoolFinish();
+        });
+    }
+
+    function tooCoolFinish():Void
+    {
+        FlxTween.tween(youreTooCool, {alpha: 0}, 1, {onComplete: function(twn:FlxTween) {
+            if (pget("seenCreditsRoll", false) != true) pset("seenCreditsRoll", true);
+
+            if (pget("seenLegacySplash", false) != true || debug)
+            {
+                new FlxTimer().start(0.5, function(t8:FlxTimer) {
+                    pressSpace.visible = !pressSpace.visible;
+                }, 0);
+                FlxTween.tween(legacySplashScreen, {alpha: 1}, 0.5, {onComplete: function(twn2:FlxTween) {
+                    inLegacySplash = true;
+                }});
+                FlxTween.tween(pressSpace, {alpha: 1}, 0.5);
+            }
+            else
+            {
+                goToMainMenu();
+            }
+        }});
+    }
+
+    override function update(elapsed:Float):Void
+    {
+        super.update(elapsed);
+        readPointer();
+        dbgUpdate();
+
+        final acc:Bool = ctl().ACCEPT || tap;
+
+        if (pget("seenCreditsRoll", false) == true && acc && canSkip)
+        {
+            if (FlxG.sound.music != null) FlxG.sound.music.time = 66540;
+            for (i in [modName, creditsText, directorsText, codersText, voiceActorsText, majinIcon, xIcon, rodentrapIcon, lordXIcon, playtestersText, specialThanksText, sonicAnimation])
+            {
+                FlxTween.cancelTweensOf(i);
+                i.visible = false;
+            }
+
+            FlxTimer.globalManager.forEach(function(tmr:FlxTimer) if (!tmr.finished) tmr.active = false);
+            tooCoolFlash();
+        }
+
+        if (!inLegacySplash) return;
+
+        if (ctl().BACK || acc)
+        {
+            inLegacySplash = false;
+            FlxG.sound.play(Paths.sound("confirmMenu"));
+            new FlxTimer().start(1, function(t9:FlxTimer) {
+                FlxTween.tween(pressSpace, {alpha: 0}, 0.5);
+                FlxTween.tween(legacySplashScreen, {alpha: 0}, 0.5, {onComplete: function(twn3:FlxTween) {
+                    if (pget("seenLegacySplash", false) != true) pset("seenLegacySplash", true);
+                    goToMainMenu();
+                }});
+            });
+        }
+    }
+
+    function goToMainMenu():Void
+    {
+        if (leaving) return;
+        leaving = true;
+
+        if (replay)
+        {
+            playMenuMusic("freakyMenu", 1.0, true);
+            sset("dataSelect", false);
+            if (!go("RewriteCreditsState")) go("RewriteMainMenuState");
+        }
+        else
+        {
+            stopMusic();
+            sset("dataSelect", false);
+            final seenPost:Bool = pget("seenPostCredits", false) == true;
+            if (seenPost || !go("RewritePostCreditsState")) go("RewriteMainMenuState");
+        }
+    }
+}

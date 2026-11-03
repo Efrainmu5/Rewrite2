@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "name": "Monitor",
+  "renderType": "sparrow",
+  "assetPath": "characters/Monitor",
+  "singTime": 5.0,
+  "scale": 3.1,
+  "flipX": false,
+  "healthIcon": {
+    "id": "majin",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "singLEFT",
+      "prefix": "singLEFT",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "singDOWN",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    },
+    {
+      "name": "singUP",
+      "prefix": "singUP",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "singRIGHT",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    },
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    },
+    {
+      "name": "scream",
+      "prefix": "scream",
+      "offsets": [-276, -335],
+      "frameRate": 15
+    }
+  ]
+}

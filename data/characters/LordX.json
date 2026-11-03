@@ -1,0 +1,149 @@
+{
+	"version": "1.0.0",
+	"renderType": "sparrow",
+	"danceEvery": 1,
+	"offsets": [
+		0,
+		0
+	],
+	"applyStageMatrix": false,
+	"scale": 3.1,
+	"name": "LordX",
+	"cameraOffsets": [
+		0,
+		0
+	],
+	"flipX": false,
+	"isPixel": false,
+	"startingAnimation": "idle",
+	"singTime": 3,
+	"healthIcon": {
+		"isPixel": false,
+		"offsets": [
+			0,
+			0
+		],
+		"shouldBop": true,
+		"scale": 1,
+		"id": "lord_X",
+		"flipX": false
+	},
+	"assetPath": "characters/LordX",
+	"atlasSettings": {
+		"applyStageMatrix": false,
+		"useRenderTexture": false,
+		"filterQuality": 1,
+		"cacheOnLoad": false,
+		"swfMode": true
+	},
+	"animations": [
+		{
+			"offsets": [
+				-284,
+				-337
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "idle",
+			"animType": "framelabel",
+			"name": "idle",
+			"looped": true,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-284,
+				-336
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "singLEFT",
+			"animType": "framelabel",
+			"name": "singLEFT",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-284,
+				-336
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "singDOWN",
+			"animType": "framelabel",
+			"name": "singDOWN",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-284,
+				-336
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "singUP",
+			"animType": "framelabel",
+			"name": "singUP",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-284,
+				-336
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "singRIGHT",
+			"animType": "framelabel",
+			"name": "singRIGHT",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-284,
+				-336
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "glitch",
+			"animType": "framelabel",
+			"name": "glitch",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-372,
+				-345
+			],
+			"flipY": false,
+			"frameRate": 30,
+			"prefix": "laugh",
+			"animType": "framelabel",
+			"name": "laugh",
+			"looped": false,
+			"flipX": false
+		},
+		{
+			"offsets": [
+				-373,
+				-347
+			],
+			"prefix": "laugh",
+			"animType": "framelabel",
+			"name": "idle-alt",
+			"looped": true,
+			"flipX": false,
+			"flipY": false,
+			"frameRate": 30,
+			"indices": [
+				0,
+				0
+			]
+		}
+	]
+}

@@ -1,0 +1,69 @@
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.addons.display.FlxBackdrop;
+
+import funkin.ui.mainmenu.MainMenuState;
+import funkin.ui.freeplay.FreeplayState;
+import funkin.ui.options.OptionsState;
+import funkin.ui.title.TitleState;
+import funkin.ui.MusicBeatState;
+import funkin.ui.story.StoryMenuState;
+import funkin.ui.ScriptedMusicBeatState;
+import funkin.ui.title.AttractState;
+
+import funkin.audio.FunkinSound;
+import funkin.modding.module.Module;
+import funkin.modding.events.StateChangeScriptEvent;
+
+import funkin.Paths;
+
+class TitleScreenReplace extends Module
+{
+    public function new()
+    {
+        super('TitleScreenReplace');
+    }
+
+    var initialized:Bool = false;
+
+    function setInitialized(bool:Bool):Void
+    {
+        initialized = bool;
+    }
+
+    override function onStateChangeBegin(event:StateChangeScriptEvent):Void
+    {
+        super.onStateChangeBegin(event);
+
+        if (!Std.isOfType(event.targetState, MainMenuState)) return;
+
+        var menu = ScriptedMusicBeatState.init("RewriteMainMenuState");
+        if (menu == null) return;
+
+        event.cancelEvent();
+        FlxG.switchState(menu);
+    }
+
+    function onStateChangeEnd(event:StateChangeScriptEvent):Void
+    {
+        final newState = event.targetState;
+
+        if (Std.isOfType(newState, TitleState))
+        {
+            TitleState.initialized = true;
+            if (FlxG.sound.music != null) FlxG.sound.music.stop();
+            final title = ScriptedMusicBeatState.init("RewriteTitleState");
+            if (title != null) FlxG.switchState(title);
+        }
+        else if (Std.isOfType(newState, MainMenuState))
+        {
+            initialized = true;
+            final menu = ScriptedMusicBeatState.init("RewriteMainMenuState");
+            if (menu != null) FlxG.switchState(menu);
+        }
+        else if (Std.isOfType(newState, AttractState))
+        {
+            initialized = true;
+        }
+    }
+}

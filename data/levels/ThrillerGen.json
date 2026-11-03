@@ -1,0 +1,8 @@
+{
+  "version": "1.0.0",
+  "name": "ThrillerGen WK",
+  "titleAsset": "storymenu/titles/weekqt",
+  "props": [],
+  "background": "#ff7ec8",
+  "songs": ["Thriller","Trinity"]
+}

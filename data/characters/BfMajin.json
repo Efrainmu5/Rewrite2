@@ -1,0 +1,70 @@
+{
+  "version": "1.0.0",
+  "renderType": "sparrow",
+  "name": "BfMajin",
+  "assetPath": "characters/Bfmajin",
+  "singTime": 3.0,
+  "scale": 3.1,
+  "flipX": true,
+  "healthIcon": {
+    "id": "bf-model",
+    "scale": 1
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "idle",
+      "offsets": [-276, -335],
+      "frameRate": 30,
+      "looped": true
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "singLEFT",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "singDOWN",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singUP",
+      "prefix": "singUP",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "singRIGHT",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singDOWNmiss",
+      "prefix": "miss",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singLEFTmiss",
+      "prefix": "miss",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singRIGHTmiss",
+      "prefix": "miss",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    },
+    {
+      "name": "singUPmiss",
+      "prefix": "miss",
+      "offsets": [-276, -335],
+      "frameRate": 30
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+	"version": "1.0.0",
+	"renderType": "sparrow",
+	"danceEvery": 1,
+	"scale": 4.5,
+	"name": "sonicKyokaiDark",
+	"singTime": 2.7,
+	"startingAnimation": "idle",
+	"isPixel": false,
+	"healthIcon": {
+		"id": "sonic"
+	},
+	"assetPath": "characters/sonicKyokaiDark",
+	"animations": [
+		{
+			"flipY": false,
+			"offsets": [
+				-276,
+				-335
+			],
+			"frameRate": 30,
+			"prefix": "idle",
+			"flipX": false,
+			"looped": true,
+			"name": "idle"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-276,
+				-335
+			],
+			"frameRate": 30,
+			"prefix": "down",
+			"flipX": false,
+			"looped": false,
+			"name": "singDOWN"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-276,
+				-335
+			],
+			"frameRate": 30,
+			"prefix": "left",
+			"flipX": false,
+			"looped": false,
+			"name": "singLEFT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-276,
+				-335
+			],
+			"frameRate": 30,
+			"prefix": "right",
+			"flipX": false,
+			"looped": false,
+			"name": "singRIGHT"
+		},
+		{
+			"flipY": false,
+			"offsets": [
+				-276,
+				-335
+			],
+			"frameRate": 30,
+			"prefix": "up",
+			"flipX": false,
+			"looped": false,
+			"name": "singUP"
+		}
+	]
+}

@@ -1,0 +1,283 @@
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxTimer;
+import funkin.Highscore;
+import funkin.PlayerSettings;
+import funkin.Paths;
+import funkin.graphics.FunkinSprite;
+import funkin.modding.events.ScriptEvent;
+import funkin.modding.module.Module;
+import funkin.play.PlayState;
+import funkin.save.Save;
+
+class RewriteVictoryModule extends Module
+{
+  final SAVE_KEY:String = 'rewrite_mod';
+  var ps:PlayState = null;
+
+  var vBlack:FunkinSprite = null;
+  var vBG:FunkinSprite = null;
+  var vBF:FunkinSprite = null;
+  var vWhite:FunkinSprite = null;
+  var vVictory:FunkinSprite = null;
+  var vSparkle:FunkinSprite = null;
+  var vPress:FunkinSprite = null;
+  var vText:FlxText = null;
+  var vBlink:FlxTimer = null;
+  
+  var vFinish:Bool = false;
+  var vLeaving:Bool = false;
+  var vBgDone:Bool = false;
+  var vBfDone:Bool = false;
+  var vJumpT:Float = 0.0;
+  var resultsOn:Bool = false;
+  var resultsDone:Bool = false;
+  var timers:Array<FlxTimer> = [];
+
+  public function new()
+  {
+    super('RewriteVictoryModule');
+    initSaveData();
+  }
+
+  function initSaveData()
+  {
+    if (Save.instance.modOptions.get(SAVE_KEY) == null)
+    {
+      var defaults:Map<String, Dynamic> = [
+        "beatthriller" => false
+      ];
+      Save.instance.modOptions.set(SAVE_KEY, defaults);
+      Save.instance.flush();
+    }
+  }
+
+  override function onCreate(event:ScriptEvent):Void
+  {
+    super.onCreate(event);
+    ps = PlayState.instance;
+    if (ps == null) return;
+    buildResults();
+  }
+
+  function solid(w:Float, h:Float, color:Int):FunkinSprite
+  {
+    final s:FunkinSprite = new FunkinSprite();
+    s.makeSolidColor(Std.int(w), Std.int(h), color);
+    s.antialiasing = false;
+    return s;
+  }
+
+  function hudAdd(spr:FlxSprite, cam:flixel.FlxCamera, z:Int):Void
+  {
+    spr.scrollFactor.set(0, 0);
+    spr.zIndex = z;
+    ps.add(spr);
+    spr.cameras = [cam];
+    ps.refresh();
+  }
+
+  function atlasSpr(key:String, x:Float, y:Float, sc:Float, z:Int):FunkinSprite
+  {
+    final s:FunkinSprite = new FunkinSprite();
+    s.frames = Paths.getSparrowAtlas(key);
+    s.antialiasing = false;
+    s.scale.set(sc, sc);
+    s.updateHitbox();
+    s.setPosition(x, y);
+    s.alpha = 0.001;
+    hudAdd(s, ps.camCutscene, z);
+    return s;
+  }
+
+  function buildResults():Void
+  {
+    vBlack = solid(2000, 1000, 0xFF000000);
+    vBlack.alpha = 0.001;
+    hudAdd(vBlack, ps.camCutscene, 3000);
+
+    vBG = atlasSpr("victoryScreen", 230, 0, 3.22, 3010);
+    vBG.animation.addByPrefix("startAnim", "STARTBG", 30, false);
+    vBG.animation.addByPrefix("bg", "BG0", 30, false);
+
+    vBF = atlasSpr("victoryScreen", 230, 0, 3.22, 3020);
+    vBF.animation.addByPrefix("startAnimation", "bfSTART", 30, false);
+    vBF.animation.addByPrefix("loopAnim", "LOOP0", 30, true);
+    vBF.animation.addByPrefix("jump", "JUMP0", 30, false);
+
+    vWhite = solid(2000, 1000, 0xFFFFFFFF);
+    vWhite.alpha = 0.001;
+    hudAdd(vWhite, ps.camCutscene, 3030);
+
+    vVictory = atlasSpr("victory", -768, 0, 3, 3040);
+    vVictory.animation.addByPrefix("victory", "victory", 12, true);
+    vSparkle = atlasSpr("sparkle", -768 + 120, 0, 1, 3041);
+    vSparkle.animation.addByPrefix("sparkle", "sparkle", 24, true);
+
+    vPress = new FunkinSprite();
+    vPress.loadGraphic(Paths.image("pressSpace"));
+    vPress.antialiasing = false;
+    vPress.scale.set(3, 3);
+    vPress.updateHitbox();
+    vPress.setPosition(256, 0);
+    vPress.visible = false;
+    hudAdd(vPress, ps.camCutscene, 3042);
+
+    vText = new FlxText(250, 300, 1280, "");
+    vText.setFormat(Paths.font("sonic-1-hud-font.ttf"), 30, 0xFFFFFFFF, "left");
+    vText.visible = false;
+    hudAdd(vText, ps.camCutscene, 3043);
+  }
+
+  override function onSongEnd(event:ScriptEvent):Void
+  {
+    super.onSongEnd(event);
+    if (resultsDone) return;
+
+    resultsDone = true;
+    event.cancel();
+    victory();
+  }
+
+  function victory():Void
+  {
+    if (resultsOn) return;
+    resultsOn = true;
+    FlxG.sound.play(Paths.sound("victoryRing"));
+
+    // Guardar la variable en Save.instance.modOptions como pediste
+    var settings = Save.instance.modOptions.get(SAVE_KEY);
+    if (settings != null)
+    {
+      settings.set("beatthriller", true);
+      Save.instance.flush();
+    }
+
+    timers.push(new FlxTimer().start(0.1, function(t:FlxTimer) {
+      vWhite.alpha += 0.1;
+    }, 10));
+
+    timers.push(new FlxTimer().start(1.5, function(tm:FlxTimer) {
+      FlxTween.tween(vWhite, {alpha: 1}, 0.25, {ease: FlxEase.quadOut});
+      timers.push(new FlxTimer().start(0.75, function(tm2:FlxTimer) {
+        victoryScreen();
+      }));
+    }));
+  }
+
+  function victoryScreen():Void
+  {
+    vBG.alpha = 1;
+    vBF.alpha = 1;
+    vBG.animation.play("startAnim", true);
+    vBF.animation.play("startAnimation", true);
+
+    vVictory.alpha = 1;
+    vVictory.animation.play("victory");
+    vVictory.y = (FlxG.height - vVictory.height) / 2;
+    vSparkle.alpha = 1;
+    vSparkle.animation.play("sparkle");
+    vSparkle.y = (FlxG.height - vSparkle.height) / 2;
+
+    ps.camHUD.visible = false;
+    vBlack.alpha = 0.75;
+    FlxTween.tween(vWhite, {alpha: 0}, 0.5, {ease: FlxEase.quadOut});
+
+    FlxTween.tween(vVictory, {x: 256}, 0.5, {ease: FlxEase.linear});
+    FlxTween.tween(vSparkle, {x: 256 + 120}, 0.5, {ease: FlxEase.linear});
+    FlxG.sound.play(Paths.sound("Victory"));
+
+    timers.push(new FlxTimer().start(5.2, function(tm:FlxTimer) {
+      FlxTween.tween(vVictory, {x: -768}, 0.5, {ease: FlxEase.linear});
+      FlxTween.tween(vSparkle, {x: -768 + 120}, 0.5, {ease: FlxEase.linear});
+    }));
+
+    timers.push(new FlxTimer().start(6, function(tm:FlxTimer) {
+      vFinish = true;
+      vPress.visible = true;
+      vText.visible = true;
+      
+      var misses:Int = 0;
+      var maxCombo:Int = 0;
+      try {
+        misses = Std.int(Highscore.tallies.missed);
+        maxCombo = Std.int(Highscore.tallies.maxCombo);
+      } catch (e:Exception) {}
+
+      var triesCount:Int = 1;
+      try {
+        triesCount = Std.int(PlayState.deathCounter) + 1;
+      } catch (e:Exception) {}
+
+      vText.text = "Tries:" + triesCount + "\nMisses:" + misses + "\nHighest Combo:" + maxCombo;
+      FlxG.sound.play(Paths.sound("End"));
+      
+      vBlink = new FlxTimer().start(0.5, function(t:FlxTimer) {
+        vPress.visible = !vPress.visible;
+      }, 0);
+      timers.push(vBlink);
+    }));
+  }
+
+  override function onUpdate(event:UpdateScriptEvent):Void
+  {
+    super.onUpdate(event);
+    if (!resultsOn) return;
+
+    var dt = event.elapsed;
+    if (vBG != null && vBG.animation != null && vBG.animation.curAnim != null && vBG.animation.curAnim.finished && vBG.animation.curAnim.name == "startAnim" && !vBgDone)
+    {
+      vBG.animation.play("bg", true);
+      vBgDone = true;
+    }
+
+    // Verificación segura para vBF
+    if (vBF != null && vBF.animation != null && vBF.animation.curAnim != null && vBF.animation.curAnim.finished)
+    {
+      if (vBF.animation.curAnim.name == "startAnimation" && !vBfDone)
+      {
+        vBF.animation.play("loopAnim", true);
+        vJumpT = FlxG.random.float(3, 7);
+        vBfDone = true;
+      }
+      else if (vBF.animation.curAnim.name == "jump")
+      {
+        vBF.animation.play("loopAnim", true);
+        vJumpT = FlxG.random.float(3, 6);
+      }
+    }
+    if (vJumpT > 0)
+    {
+      vJumpT -= dt;
+      if (vJumpT <= 0) vBF.animation.play("jump", true);
+    }
+
+    if (vFinish && !vLeaving && PlayerSettings.player1.controls.ACCEPT)
+    {
+      vLeaving = true;
+      FlxG.sound.play(Paths.sound("confirmMenu"));
+      if (vBlink != null) vBlink.cancel();
+      
+      timers.push(new FlxTimer().start(0.05, function(t:FlxTimer) {
+        vPress.visible = !vPress.visible;
+      }, 20));
+
+      timers.push(new FlxTimer().start(0.25, function(t:FlxTimer) {
+        ps.camCutscene.fade(0xFF000000, 0.5);
+      }));
+      
+      timers.push(new FlxTimer().start(1.0, function(t:FlxTimer) {
+        ps.endSong(true);
+      }));
+    }
+  }
+
+  override function onDestroy(event:ScriptEvent):Void
+  {
+    for (t in timers) if (t != null) t.cancel();
+    super.onDestroy(event);
+  }
+}

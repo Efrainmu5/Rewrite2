@@ -1,0 +1,59 @@
+{
+ "version": "2.2.4",
+ "songName": "Trinity",
+ "charter": "Unknown",
+ "artist": "IDK",
+ "offsets": { },
+ "playData": {
+  "difficulties": [
+   "normal"
+  ],
+  "characters": {
+   "player": "BfMajin",
+   "girlfriend": "gf",
+   "opponent": "Majin",
+   "opponentVocals": [
+    "Majin"
+   ],
+   "playerVocals": [
+    "BfMajin"
+   ]
+  },
+  "stage": "mainStage",
+  "noteStyle": "funkin",
+  "previewEnd": 0
+ },
+ "generatedBy": "Friday Night Funkin' - v0.8.6",
+ "timeChanges": [
+  {
+   "t": 0,
+   "b": 0,
+   "bpm": 160,
+   "bt": [4, 4, 4, 4]
+  },
+  {
+   "t": 339900,
+   "b": 906.4,
+   "bpm": 105,
+   "bt": [4, 4, 4, 4]
+  },
+  {
+   "t": 344471.428571429,
+   "b": 914.4,
+   "bpm": 115,
+   "bt": [4, 4, 4, 4]
+  },
+  {
+   "t": 348770.341614907,
+   "b": 922.6396,
+   "bpm": 120,
+   "bt": [4, 4, 4, 4]
+  },
+  {
+   "t": 352645.341614907,
+   "b": 930.3896,
+   "bpm": 130,
+   "bt": [4, 4, 4, 4]
+  }
+ ]
+}

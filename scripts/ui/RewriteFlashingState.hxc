@@ -1,0 +1,304 @@
+import flixel.FlxCamera;
+import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.text.FlxText;
+import flixel.text.FlxTextBorderStyle;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
+import flixel.util.FlxSave;
+import flixel.util.FlxTimer;
+import funkin.Paths;
+import funkin.PlayerSettings;
+import funkin.audio.FunkinSound;
+import funkin.modding.base.ScriptedMusicBeatState;
+import funkin.ui.MusicBeatState;
+import haxe.Exception;
+import openfl.display.BlendMode;
+
+class RewriteFlashingState extends MusicBeatState
+{
+  public function new()
+  {
+    super();
+  }
+
+  // ======================================================================
+  //  BLOQUE COMUN (igual en todos los estados de Rewrite)
+  //  Canvas de 820x720 centrado: las coordenadas originales de Psych se
+  //  usan tal cual y funciona en cualquier tamano/relacion de pantalla.
+  // ======================================================================
+  var DW:Float = 820.0;
+  var DH:Float = 720.0;
+  var camUI:FlxCamera = null;
+  var px:Float = -9999.0;
+  var py:Float = -9999.0;
+  var tap:Bool = false;
+  var tapHeld:Bool = false;
+  var PREFS_CLS:Dynamic = null;
+
+  // full = true usa toda la pantalla (creditos finales, post creditos)
+  function initUI(full:Bool):Void
+  {
+    if (full)
+    {
+      DW = FlxG.width;
+      DH = FlxG.height;
+    }
+    camUI = new FlxCamera(Std.int((FlxG.width - DW) / 2), Std.int((FlxG.height - DH) / 2), Std.int(DW), Std.int(DH));
+    camUI.bgColor = 0xFF000000;
+    FlxG.cameras.add(camUI, false);
+  }
+
+  function put(o:Dynamic):Dynamic
+  {
+    o.cameras = [camUI];
+    add(o);
+    return o;
+  }
+
+  // equivalente a screenCenter(): axis 0x01 = X, 0x10 = Y, 0x11 = ambos
+  function ctr(s:FlxSprite, axis:Int):Void
+  {
+    if (axis != 0x10) s.x = (DW - s.width) / 2;
+    if (axis != 0x01) s.y = (DH - s.height) / 2;
+  }
+
+  function mkText(x:Float, y:Float, w:Float, str:String, size:Int, color:Int, align:String, font:String):FlxText
+  {
+    final t:FlxText = new FlxText(x, y, w, str);
+    t.setFormat(Paths.font(font), size, color, align, FlxTextBorderStyle.SHADOW, 0xFF000000);
+    t.shadowOffset.x += 1;
+    t.shadowOffset.y += 3;
+    return t;
+  }
+
+  // fade azul "multiply" que usan todas las transiciones del mod
+  function mkBlueFade():FlxSprite
+  {
+    final f:FlxSprite = new FlxSprite(0, 0).makeGraphic(Std.int(DW), Std.int(DH), 0xFF0000FF);
+    f.blend = BlendMode.MULTIPLY;
+    f.alpha = 0.001;
+    put(f);
+    return f;
+  }
+
+  function ctl():Dynamic
+  {
+    return PlayerSettings.player1.controls;
+  }
+
+  // puntero unificado: raton en PC, dedo en movil (coordenadas del canvas)
+  function readPointer():Void
+  {
+    tap = false;
+    tapHeld = false;
+    if (FlxG.onMobile)
+    {
+      px = -9999.0;
+      py = -9999.0;
+      for (t in FlxG.touches.list)
+      {
+        px = t.screenX - camUI.x;
+        py = t.screenY - camUI.y;
+        if (t.justPressed) tap = true;
+        if (t.pressed) tapHeld = true;
+      }
+    }
+    else
+    {
+      px = FlxG.mouse.screenX - camUI.x;
+      py = FlxG.mouse.screenY - camUI.y;
+      tap = FlxG.mouse.justPressed;
+      tapHeld = FlxG.mouse.pressed;
+    }
+  }
+
+  function over(s:FlxSprite):Bool
+  {
+    return s != null && px >= s.x && px <= s.x + s.width && py >= s.y && py <= s.y + s.height;
+  }
+
+  function go(name:String):Bool
+  {
+    final s = ScriptedMusicBeatState.init(name);
+    if (s == null) return false;
+    FlxG.switchState(s);
+    return true;
+  }
+
+  // ---- ajustes del mod (se guardan en su propio archivo de guardado) ----
+  function prefsObj():FlxSave
+  {
+    final s:FlxSave = new FlxSave();
+    s.bind("rewrite_mod", "rewrite");
+    return s;
+  }
+
+  function pget(key:String, def:Dynamic):Dynamic
+  {
+    final v:Dynamic = Reflect.field(prefsObj().data, key);
+    return v == null ? def : v;
+  }
+
+  function pset(key:String, val:Dynamic):Void
+  {
+    final s:FlxSave = prefsObj();
+    Reflect.setField(s.data, key, val);
+    s.flush();
+  }
+
+  // datos que solo duran mientras el juego esta abierto (nunca se guardan)
+  function sget(key:String, def:Dynamic):Dynamic
+  {
+    final s:FlxSave = new FlxSave();
+    s.bind("rewrite_session", "rewrite");
+    final v:Dynamic = Reflect.field(s.data, key);
+    return v == null ? def : v;
+  }
+
+  function sset(key:String, val:Dynamic):Void
+  {
+    final s:FlxSave = new FlxSave();
+    s.bind("rewrite_session", "rewrite");
+    Reflect.setField(s.data, key, val);
+  }
+
+  // preferencias nativas de V-Slice (si esta version no las tiene, devuelve null)
+  function nativePref(key:String):Dynamic
+  {
+    if (PREFS_CLS == null) PREFS_CLS = Type.resolveClass("funkin.Preferences");
+    if (PREFS_CLS == null) return null;
+    try
+    {
+      return Reflect.getProperty(PREFS_CLS, key);
+    }
+    catch (e:Exception)
+    {
+      return null;
+    }
+  }
+
+  function setNativePref(key:String, val:Dynamic):Bool
+  {
+    if (PREFS_CLS == null) PREFS_CLS = Type.resolveClass("funkin.Preferences");
+    if (PREFS_CLS == null) return false;
+    try
+    {
+      Reflect.setProperty(PREFS_CLS, key, val);
+      return true;
+    }
+    catch (e:Exception)
+    {
+      return false;
+    }
+  }
+
+  function flashingOn():Bool
+  {
+    final v:Dynamic = pget("flashing", null);
+    if (v != null) return v == true;
+    final n:Dynamic = nativePref("flashingLights");
+    return n == null ? true : n == true;
+  }
+
+  function playMenuMusic(name:String, vol:Float, loop:Bool):Void
+  {
+    try
+    {
+      FunkinSound.playMusic(name, {startingVolume: vol, overrideExisting: true, restartTrack: false, loop: loop});
+    }
+    catch (e:Exception) {}
+  }
+
+  function stopMusic():Void
+  {
+    if (FlxG.sound.music != null) FlxG.sound.music.stop();
+  }
+
+  function videoPath(name:String):String
+  {
+    try
+    {
+      return Paths.videos(name);
+    }
+    catch (e:Exception) {}
+    return Paths.file("videos/" + name + ".mp4");
+  }
+
+  // hit-test usando el tamano real escalado (para sprites con scale.set sin updateHitbox)
+  function overS(s:FlxSprite):Bool
+  {
+    if (s == null) return false;
+    final w:Float = s.frameWidth * Math.abs(s.scale.x);
+    final h:Float = s.frameHeight * Math.abs(s.scale.y);
+    final cx:Float = s.x + s.width / 2;
+    final cy:Float = s.y + s.height / 2;
+    return px >= cx - w / 2 && px <= cx + w / 2 && py >= cy - h / 2 && py <= cy + h / 2;
+  }
+
+  // boton "atras" tactil (solo se muestra en movil)
+  var backBtn:FlxSprite = null;
+
+  function makeBackBtn():Void
+  {
+    if (!FlxG.onMobile) return;
+    backBtn = new FlxSprite(10, 635).loadGraphic(Paths.image("menus/options/back"));
+    backBtn.scale.set(3, 3);
+    backBtn.updateHitbox();
+    put(backBtn);
+  }
+
+  function backPressed():Bool
+  {
+    return ctl().BACK || (tap && backBtn != null && backBtn.visible && over(backBtn));
+  }
+  var bg:FlxSprite = null;
+  var accepted:Bool = false;
+  var warningSound:Dynamic = null;
+
+  override function create():Void
+  {
+    super.create();
+    initUI(false);
+    FlxG.mouse.visible = false;
+
+    bg = new FlxSprite().loadGraphic(Paths.image("menus/warning"));
+    bg.scale.set(2, 2);
+    ctr(bg, 0x11);
+    bg.alpha = 0;
+    bg.color = 0xFF0000FF;
+    put(bg);
+
+    warningSound = FlxG.sound.load(Paths.sound("warning"));
+
+    new FlxTimer().start(0.5, function(t1:FlxTimer) {
+      FlxTween.color(bg, 0.3, 0xFF0000FF, 0xFFFFFFFF);
+      FlxTween.tween(bg, {alpha: 1}, 0.5);
+      FlxG.sound.play(Paths.sound("selectSong"));
+
+      new FlxTimer().start(0.75, function(t2:FlxTimer) {
+        warningSound.play();
+      });
+    });
+  }
+
+  override function update(elapsed:Float):Void
+  {
+    super.update(elapsed);
+    readPointer();
+
+    if ((ctl().ACCEPT || tap) && !accepted)
+    {
+      FlxG.sound.play(Paths.sound("confirmMenu"));
+      accepted = true;
+      FlxTween.color(bg, 0.3, 0xFFFFFFFF, 0xFF0000FF);
+      camUI.fade(0xFF000000, 0.5);
+      warningSound.fadeOut(0.3, 0);
+      new FlxTimer().start(0.55, function(t3:FlxTimer) {
+        sset("flashSeen", true);
+        go("RewriteTitleState");
+      });
+    }
+  }
+}
